@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>숫자 뽑기 (랜덤 번호 추첨) | Neoflows Tools</title>
+  <meta name="description" content="원하는 범위를 설정하여 행운의 숫자를 무작위로 추출합니다. 로또 번호 생성, 주사위, 랜덤 뽑기 등 다양한 활용!">
+  <!-- Google Fonts (Noto Sans KR) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Shared Styles -->
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    /* ======================================== */
+    /*  Number Picker Page - Specific Styles     */
+    /* ======================================== */
+
+    /* Ball animations */
+    @keyframes ballPop {
+      0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+      60% { transform: scale(1.15) rotate(10deg); opacity: 1; }
+      80% { transform: scale(0.95) rotate(-3deg); }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    @keyframes ballGlow {
+      0%, 100% { box-shadow: 0 0 8px rgba(245,158,11,0.3), 0 4px 14px rgba(245,158,11,0.15); }
+      50% { box-shadow: 0 0 20px rgba(245,158,11,0.5), 0 4px 24px rgba(245,158,11,0.3); }
+    }
+    @keyframes ballFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+    @keyframes shimmerRoll {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    @keyframes confettiFall {
+      0% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+      100% { opacity: 0; transform: translateY(-80px) rotate(720deg) scale(0.2); }
+    }
+    @keyframes shakeInput {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(6px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+    }
+
+    .ball-pop {
+      animation: ballPop 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    .ball-glow {
+      animation: ballGlow 2s ease-in-out infinite;
+    }
+    .ball-float {
+      animation: ballFloat 3s ease-in-out infinite;
+    }
+    .shake-input {
+      animation: shakeInput 0.4s ease-in-out;
+    }
+
+    /* Number ball */
+    .number-ball {
+      width: 4.5rem;
+      height: 4.5rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.375rem;
+      font-weight: 900;
+      color: white;
+      position: relative;
+      flex-shrink: 0;
+      user-select: none;
+    }
+    .number-ball::before {
+      content: '';
+      position: absolute;
+      top: 8%;
+      left: 18%;
+      width: 35%;
+      height: 25%;
+      background: rgba(255,255,255,0.35);
+      border-radius: 50%;
+      transform: rotate(-25deg);
+    }
+    .number-ball::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      box-shadow: inset 0 -4px 8px rgba(0,0,0,0.15), 0 4px 14px rgba(0,0,0,0.1);
+      pointer-events: none;
+    }
+
+    /* Ball color variants */
+    .ball-amber { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .ball-orange { background: linear-gradient(135deg, #f97316, #ea580c); }
+    .ball-rose { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+    .ball-emerald { background: linear-gradient(135deg, #10b981, #059669); }
+    .ball-sky { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+    .ball-violet { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .ball-pink { background: linear-gradient(135deg, #ec4899, #db2777); }
+    .ball-teal { background: linear-gradient(135deg, #14b8a6, #0d9488); }
+
+    /* Result area */
+    .result-area {
+      min-height: 7rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      padding: 1.5rem;
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      border: 2px dashed #fcd34d;
+      border-radius: 1.25rem;
+      transition: all 0.3s ease;
+    }
+    .result-area.has-results {
+      border-style: solid;
+      border-color: #f59e0b;
+      background: linear-gradient(135deg, #fffbeb 0%, #fef9c3 50%, #fef3c7 100%);
+    }
+
+    .result-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      color: #92400e;
+      opacity: 0.5;
+    }
+    .result-placeholder svg {
+      width: 2.5rem;
+      height: 2.5rem;
+      color: #f59e0b;
+      opacity: 0.6;
+    }
+
+    /* Confetti particle */
+    .confetti-particle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: confettiFall 0.9s ease-out forwards;
+      pointer-events: none;
+    }
+
+    /* Preset buttons */
+    .preset-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.875rem;
+      background: white;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #334155;
+      white-space: nowrap;
+    }
+    .preset-btn:hover {
+      border-color: #f59e0b;
+      background: #fffbeb;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245,158,11,0.15);
+    }
+    .preset-btn.active {
+      border-color: #f59e0b;
+      background: #fef3c7;
+      color: #92400e;
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.15);
+    }
+    .preset-btn .preset-icon {
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    /* Custom checkbox toggle */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #334155;
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+    }
+    .toggle-label small {
+      font-size: 0.6875rem;
+      font-weight: 400;
+      color: #94a3b8;
+    }
+    .toggle-switch {
+      position: relative;
+      width: 2.75rem;
+      height: 1.5rem;
+      flex-shrink: 0;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #cbd5e1;
+      border-radius: 9999px;
+      transition: 0.25s;
+    }
+    .toggle-slider::before {
+      content: "";
+      position: absolute;
+      height: 1.125rem;
+      width: 1.125rem;
+      left: 0.1875rem;
+      bottom: 0.1875rem;
+      background-color: white;
+      border-radius: 50%;
+      transition: 0.25s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: #f59e0b;
+    }
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(1.25rem);
+    }
+
+    /* History */
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      border-radius: 0.875rem;
+      background: #f8fafc;
+      border: 1px solid #f1f5f9;
+      transition: all 0.15s ease;
+    }
+    .history-item:hover {
+      background: #fffbeb;
+      border-color: #fde68a;
+    }
+    .history-balls {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+    .history-mini-ball {
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.625rem;
+      font-weight: 800;
+      color: white;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .history-mini-ball::before {
+      content: '';
+      position: absolute;
+      top: 15%;
+      left: 20%;
+      width: 30%;
+      height: 20%;
+      background: rgba(255,255,255,0.3);
+      border-radius: 50%;
+      transform: rotate(-20deg);
+    }
+    .history-time {
+      font-size: 0.6875rem;
+      color: #94a3b8;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .history-clear-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #94a3b8;
+      padding: 0.25rem;
+      border-radius: 0.375rem;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .history-clear-btn:hover {
+      color: #ef4444;
+      background: #fef2f2;
+    }
+
+    /* Shimmer on rolling */
+    .shimmer-rolling {
+      background: linear-gradient(90deg, #f59e0b 25%, #fbbf24 50%, #f59e0b 75%);
+      background-size: 200% 100%;
+      animation: shimmerRoll 0.4s linear infinite;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Big pick button */
+    .pick-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.625rem;
+      padding: 1rem 2.5rem;
+      border-radius: 1rem;
+      font-weight: 800;
+      font-size: 1.125rem;
+      font-family: inherit;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: white;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      box-shadow: 0 4px 14px rgba(245,158,11,0.35);
+      position: relative;
+      overflow: hidden;
+    }
+    .pick-btn:hover {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      box-shadow: 0 6px 20px rgba(245,158,11,0.45);
+      transform: translateY(-2px);
+    }
+    .pick-btn:active {
+      transform: translateY(0) scale(0.98);
+    }
+    .pick-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+    .pick-btn svg {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+
+    /* Input group styling */
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+    }
+    .input-group label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .input-group input {
+      text-align: center;
+      font-weight: 700;
+      font-size: 1.125rem;
+      padding: 0.75rem;
+    }
+
+    /* Section title */
+    .section-title {
+      font-size: 0.8125rem;
+      font-weight: 800;
+      color: #334155;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.875rem;
+    }
+    .section-title .title-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #f59e0b;
+    }
+
+    /* Responsive balls */
+    @media (max-width: 640px) {
+      .number-ball {
+        width: 3.5rem;
+        height: 3.5rem;
+        font-size: 1.0625rem;
+      }
+      .result-area {
+        min-height: 5.5rem;
+        padding: 1rem;
+        gap: 0.5rem;
+      }
+      .pick-btn {
+        padding: 0.875rem 2rem;
+        font-size: 1rem;
+      }
+      .preset-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+      }
+    }
+  </style>
+  <style id="nfDarkOverrides"></style>
+</head>
+<body>
+  <div id="app" style="display:flex;flex-direction:column;min-height:100vh;"></div>
+
+  <!-- Shared JS -->
+  <script src="js/common.js"></script>
+
+  <script>
+    /* ======================================== */
+    /*  Number Picker - Main Script              */
+    /* ======================================== */
+
+    const BALL_COLORS = ['ball-amber', 'ball-orange', 'ball-rose', 'ball-emerald', 'ball-sky', 'ball-violet', 'ball-pink', 'ball-teal'];
+    const HISTORY_KEY = 'nf_numberpicker_history';
+    const MAX_HISTORY = 20;
+
+    let isRolling = false;
+    let activePreset = null;
+
+    /* --- Presets --- */
+    const PRESETS = {
+      lotto: { min: 1, max: 45, count: 6, duplicates: false, sort: true, label: '로또', icon: '🎰', iconBg: '#fef3c7' },
+      random10: { min: 1, max: 10, count: 1, duplicates: false, sort: false, label: '1~10 랜덤', icon: '🎲', iconBg: '#ecfdf5' },
+      dice: { min: 1, max: 6, count: 1, duplicates: false, sort: false, label: '주사위', icon: '⚀', iconBg: '#ede9fe' },
+    };
+
+    /* --- Render Page --- */
+    function renderPage() {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        ${toolHeaderHTML('숫자 뽑기 (랜덤 번호 추첨)', '원하는 범위를 설정하여 행운의 숫자를 무작위로 추출합니다.')}
+
+        <main class="nf-container" style="flex:1;padding-top:1.5rem;padding-bottom:2.5rem;">
+
+          <!-- Presets -->
+          <section class="stagger-hidden animate-fade-in-up delay-1" style="margin-bottom:1.25rem;">
+            <div class="section-title"><span class="title-dot"></span>빠른 선택</div>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+              ${Object.entries(PRESETS).map(([key, p]) => `
+                <button class="preset-btn" data-preset="${key}" onclick="applyPreset('${key}')">
+                  <span class="preset-icon" style="background:${p.iconBg}">${p.icon}</span>
+                  <span>${p.label}</span>
+                  <span style="font-size:0.6875rem;color:#94a3b8;font-weight:400;">${p.min}~${p.max}, ${p.count}개</span>
+                </button>
+              `).join('')}
+            </div>
+          </section>
+
+          <div style="display:grid;grid-template-columns:1fr;gap:1.25rem;">
+            <!-- Desktop: 2-col layout -->
+            <div class="nf-desktop-grid" style="display:grid;grid-template-columns:1fr;gap:1.25rem;">
+
+              <!-- Settings Card -->
+              <section class="nf-card stagger-hidden animate-fade-in-up delay-2">
+                <div class="section-title"><span class="title-dot"></span>설정</div>
+
+                <!-- Range Inputs -->
+                <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:0.75rem;align-items:end;margin-bottom:1rem;">
+                  <div class="input-group">
+                    <label for="minInput">최소값</label>
+                    <input type="number" id="minInput" class="nf-input" value="1" min="-999999999" max="999999999">
+                  </div>
+                  <div style="padding-bottom:0.5rem;font-weight:800;color:#94a3b8;font-size:1.25rem;">~</div>
+                  <div class="input-group">
+                    <label for="maxInput">최대값</label>
+                    <input type="number" id="maxInput" class="nf-input" value="45" min="-999999999" max="999999999">
+                  </div>
+                </div>
+
+                <!-- Count Input -->
+                <div class="input-group" style="margin-bottom:1rem;">
+                  <label for="countInput">뽑을 개수</label>
+                  <input type="number" id="countInput" class="nf-input" value="6" min="1" max="9999" style="max-width:8rem;">
+                </div>
+
+                <!-- Toggles -->
+                <div style="padding:0.25rem 0;">
+                  <div class="toggle-row">
+                    <div class="toggle-label">
+                      <span>중복 허용</span>
+                      <small>같은 숫자가 여러 번 나올 수 있습니다</small>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="duplicatesToggle">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div class="toggle-row">
+                    <div class="toggle-label">
+                      <span>오름차순 정렬</span>
+                      <small>결과를 작은 수부터 큰 수로 정렬합니다</small>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="sortToggle" checked>
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Pick Button -->
+                <div style="display:flex;justify-content:center;margin-top:1.25rem;">
+                  <button class="pick-btn" id="pickBtn" onclick="startPick()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
+                    숫자 뽑기
+                  </button>
+                </div>
+              </section>
+
+              <!-- Result Card -->
+              <section class="nf-card stagger-hidden animate-fade-in-up delay-3" style="position:relative;overflow:hidden;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.875rem;">
+                  <div class="section-title" style="margin-bottom:0;"><span class="title-dot"></span>결과</div>
+                  <button class="nf-btn nf-btn-ghost" style="padding:0.375rem 0.75rem;font-size:0.75rem;" onclick="copyResults()" id="copyBtn" disabled>
+                    <svg style="width:0.875rem;height:0.875rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    복사
+                  </button>
+                </div>
+                <div class="result-area" id="resultArea">
+                  <div class="result-placeholder" id="resultPlaceholder">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                    <span style="font-size:0.875rem;font-weight:600;">아래 버튼을 눌러 숫자를 뽑으세요!</span>
+                  </div>
+                </div>
+                <div id="confettiContainer" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:1.5rem;"></div>
+              </section>
+            </div>
+
+            <!-- History Card -->
+            <section class="nf-card stagger-hidden animate-fade-in-up delay-4">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.875rem;">
+                <div class="section-title" style="margin-bottom:0;"><span class="title-dot"></span>히스토리</div>
+                <button class="history-clear-btn" onclick="clearHistory()" title="히스토리 삭제">
+                  <svg style="width:1rem;height:1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+              <div id="historyList" style="display:flex;flex-direction:column;gap:0.5rem;max-height:24rem;overflow-y:auto;"></div>
+              <div id="historyEmpty" style="text-align:center;padding:2rem 0;color:#94a3b8;font-size:0.8125rem;font-weight:500;">
+                아직 추첨 기록이 없습니다
+              </div>
+            </section>
+
+          </div>
+        </main>
+
+        ${toolFooterHTML()}
+      `;
+
+      // Add responsive grid styles for desktop
+      addDesktopGridStyles();
+      // Load history
+      renderHistory();
+      // Listen for input changes to deactivate preset
+      setupInputListeners();
+      // Initialize dark overrides
+      updateBodyDarkStyles();
+    }
+
+    /* --- Desktop Grid --- */
+    function addDesktopGridStyles() {
+      const style = document.createElement('style');
+      style.textContent = `
+        @media (min-width: 768px) {
+          .nf-desktop-grid {
+            grid-template-columns: 5fr 7fr !important;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    /* --- Input Listeners --- */
+    function setupInputListeners() {
+      const inputs = ['minInput', 'maxInput', 'countInput', 'duplicatesToggle', 'sortToggle'];
+      inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', deactivatePreset);
+          el.addEventListener('change', deactivatePreset);
+        }
+      });
+    }
+
+    function deactivatePreset() {
+      activePreset = null;
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    }
+
+    /* --- Apply Preset --- */
+    function applyPreset(key) {
+      const p = PRESETS[key];
+      if (!p) return;
+
+      document.getElementById('minInput').value = p.min;
+      document.getElementById('maxInput').value = p.max;
+      document.getElementById('countInput').value = p.count;
+      document.getElementById('duplicatesToggle').checked = p.duplicates;
+      document.getElementById('sortToggle').checked = p.sort;
+
+      // Highlight active preset
+      activePreset = key;
+      document.querySelectorAll('.preset-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.preset === key);
+      });
+
+      showToast(`'${p.label}' 프리셋이 적용되었습니다`);
+    }
+
+    /* --- Validate Inputs --- */
+    function validateInputs() {
+      const minVal = parseInt(document.getElementById('minInput').value);
+      const maxVal = parseInt(document.getElementById('maxInput').value);
+      const countVal = parseInt(document.getElementById('countInput').value);
+      const allowDup = document.getElementById('duplicatesToggle').checked;
+
+      if (isNaN(minVal) || isNaN(maxVal) || isNaN(countVal)) {
+        showToast('숫자를 올바르게 입력해 주세요');
+        return null;
+      }
+
+      if (minVal > maxVal) {
+        showToast('최소값이 최대값보다 클 수 없습니다');
+        shakeElement(document.getElementById('minInput'));
+        shakeElement(document.getElementById('maxInput'));
+        return null;
+      }
+
+      const range = maxVal - minVal + 1;
+
+      if (countVal < 1) {
+        showToast('뽑을 개수는 1 이상이어야 합니다');
+        return null;
+      }
+
+      if (!allowDup && countVal > range) {
+        showToast(`중복 없이 뽑을 수 있는 최대 개수는 ${range}개입니다`);
+        shakeElement(document.getElementById('countInput'));
+        return null;
+      }
+
+      return { min: minVal, max: maxVal, count: countVal, allowDup, sort: document.getElementById('sortToggle').checked };
+    }
+
+    function shakeElement(el) {
+      el.classList.remove('shake-input');
+      void el.offsetWidth; // force reflow
+      el.classList.add('shake-input');
+      setTimeout(() => el.classList.remove('shake-input'), 500);
+    }
+
+    /* --- Pick Numbers --- */
+    function startPick() {
+      if (isRolling) return;
+
+      const config = validateInputs();
+      if (!config) return;
+
+      isRolling = true;
+      const pickBtn = document.getElementById('pickBtn');
+      pickBtn.disabled = true;
+      pickBtn.innerHTML = `<svg class="animate-spin" style="width:1.25rem;height:1.25rem" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> 뽑는 중...`;
+
+      const resultArea = document.getElementById('resultArea');
+      const placeholder = document.getElementById('resultPlaceholder');
+      if (placeholder) placeholder.style.display = 'none';
+      resultArea.classList.add('has-results');
+
+      // Clear old results
+      resultArea.querySelectorAll('.number-ball').forEach(b => b.remove());
+
+      // Generate numbers
+      const numbers = generateNumbers(config);
+
+      // Animate rolling effect then reveal
+      animateRolling(resultArea, numbers, config, () => {
+        // Save to history
+        saveToHistory(numbers, config);
+        // Enable copy
+        document.getElementById('copyBtn').disabled = false;
+        // Fire confetti
+        spawnConfetti();
+        // Reset button
+        pickBtn.disabled = false;
+        pickBtn.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:1.25rem;height:1.25rem"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg> 숫자 뽑기`;
+        isRolling = false;
+      });
+    }
+
+    function generateNumbers(config) {
+      const { min, max, count, allowDup, sort } = config;
+      const range = max - min + 1;
+      const numbers = [];
+
+      if (allowDup) {
+        for (let i = 0; i < count; i++) {
+          numbers.push(Math.floor(Math.random() * range) + min);
+        }
+      } else {
+        const pool = [];
+        for (let i = min; i <= max; i++) pool.push(i);
+        // Fisher-Yates shuffle and take first `count`
+        for (let i = pool.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        numbers.push(...pool.slice(0, count));
+      }
+
+      if (sort) numbers.sort((a, b) => a - b);
+      return numbers;
+    }
+
+    /* --- Rolling Animation --- */
+    function animateRolling(container, finalNumbers, config, onComplete) {
+      const { min, max, count } = config;
+      const totalDuration = 1200; // ms
+      const startTime = performance.now();
+      let revealedCount = 0;
+
+      // Create placeholder balls with rolling numbers
+      const balls = [];
+      for (let i = 0; i < count; i++) {
+        const ball = document.createElement('div');
+        ball.className = `number-ball ${BALL_COLORS[i % BALL_COLORS.length]}`;
+        ball.style.opacity = '0';
+        ball.style.transform = 'scale(0)';
+        ball.textContent = min;
+        container.appendChild(ball);
+        balls.push(ball);
+      }
+
+      function rollFrame(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / totalDuration, 1);
+
+        // Determine how many balls to show based on progress
+        const showCount = Math.min(Math.floor(progress * count * 1.5) + 1, count);
+
+        for (let i = 0; i < count; i++) {
+          const ball = balls[i];
+          if (i < showCount) {
+            if (ball.style.opacity === '0') {
+              ball.style.opacity = '0.4';
+              ball.style.transform = 'scale(0.7)';
+            }
+            // Rolling number effect - slow down as we progress
+            const rollSpeed = Math.max(30, 200 * (1 - progress));
+            if (progress < 0.85 || i >= revealedCount) {
+              const randomNum = Math.floor(Math.random() * (max - min + 1)) + min;
+              ball.textContent = randomNum;
+            }
+          }
+        }
+
+        if (progress < 1) {
+          requestAnimationFrame(rollFrame);
+        } else {
+          // Reveal final numbers with staggered pop animation
+          balls.forEach((ball, i) => {
+            setTimeout(() => {
+              ball.textContent = finalNumbers[i];
+              ball.className = `number-ball ${BALL_COLORS[i % BALL_COLORS.length]} ball-pop ball-float`;
+              ball.style.opacity = '1';
+              ball.style.transform = 'scale(1)';
+
+              // Add glow after pop
+              setTimeout(() => {
+                ball.classList.add('ball-glow');
+              }, 550);
+            }, i * 120);
+          });
+
+          // Complete after all balls revealed
+          setTimeout(onComplete, count * 120 + 600);
+        }
+      }
+
+      requestAnimationFrame(rollFrame);
+    }
+
+    /* --- Confetti --- */
+    function spawnConfetti() {
+      const container = document.getElementById('confettiContainer');
+      if (!container) return;
+      const colors = ['#f59e0b', '#ef4444', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#06b6d4'];
+
+      for (let i = 0; i < 24; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'confetti-particle';
+        particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+        particle.style.left = (20 + Math.random() * 60) + '%';
+        particle.style.top = (30 + Math.random() * 40) + '%';
+        particle.style.width = (4 + Math.random() * 8) + 'px';
+        particle.style.height = particle.style.width;
+        particle.style.animationDuration = (0.6 + Math.random() * 0.6) + 's';
+        container.appendChild(particle);
+        setTimeout(() => particle.remove(), 1200);
+      }
+    }
+
+    /* --- Copy Results --- */
+    function copyResults() {
+      const balls = document.querySelectorAll('#resultArea .number-ball');
+      if (balls.length === 0) {
+        showToast('복사할 결과가 없습니다');
+        return;
+      }
+      const numbers = Array.from(balls).map(b => b.textContent.trim());
+      copyToClipboard(numbers.join(', '), '결과가 클립보드에 복사되었습니다!');
+    }
+
+    /* --- History --- */
+    function getHistory() {
+      try {
+        return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+      } catch { return []; }
+    }
+
+    function saveToHistory(numbers, config) {
+      const history = getHistory();
+      history.unshift({
+        numbers,
+        config: { min: config.min, max: config.max, count: config.count, allowDup: config.allowDup, sort: config.sort },
+        time: new Date().toISOString(),
+      });
+      // Limit to max
+      if (history.length > MAX_HISTORY) history.length = MAX_HISTORY;
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+      renderHistory();
+    }
+
+    function clearHistory() {
+      const history = getHistory();
+      if (history.length === 0) {
+        showToast('삭제할 기록이 없습니다');
+        return;
+      }
+      localStorage.removeItem(HISTORY_KEY);
+      renderHistory();
+      showToast('히스토리가 삭제되었습니다');
+    }
+
+    function renderHistory() {
+      const list = document.getElementById('historyList');
+      const empty = document.getElementById('historyEmpty');
+      if (!list || !empty) return;
+
+      const history = getHistory();
+
+      if (history.length === 0) {
+        list.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+
+      empty.style.display = 'none';
+      list.innerHTML = history.map((entry, idx) => {
+        const date = new Date(entry.time);
+        const timeStr = `${date.getMonth()+1}/${date.getDate()} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+        const ballCount = Math.min(entry.numbers.length, 10);
+        const moreCount = entry.numbers.length - ballCount;
+
+        return `
+          <div class="history-item" style="${idx === 0 ? 'animation:fadeInUp 0.4s ease-out;' : ''}">
+            <div style="display:flex;flex-direction:column;gap:0.25rem;flex:1;min-width:0;">
+              <div class="history-balls">
+                ${entry.numbers.slice(0, ballCount).map((n, i) => `
+                  <span class="history-mini-ball ${BALL_COLORS[i % BALL_COLORS.length]}">${n}</span>
+                `).join('')}
+                ${moreCount > 0 ? `<span style="font-size:0.6875rem;color:#94a3b8;font-weight:600;align-self:center;">+${moreCount}</span>` : ''}
+              </div>
+              <div style="display:flex;gap:0.5rem;align-items:center;">
+                <span class="history-time">${timeStr}</span>
+                <span style="font-size:0.625rem;color:#cbd5e1;">${entry.config.min}~${entry.config.max}</span>
+              </div>
+            </div>
+            <button class="history-clear-btn" onclick="copyHistoryItem(${idx})" title="복사" style="flex-shrink:0;">
+              <svg style="width:0.875rem;height:0.875rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function copyHistoryItem(idx) {
+      const history = getHistory();
+      if (!history[idx]) return;
+      copyToClipboard(history[idx].numbers.join(', '), '결과가 클립보드에 복사되었습니다!');
+    }
+
+    /* --- Dark Mode Overrides --- */
+    function updateNumberPickerDarkStyles() {
+      const style = document.getElementById('nfDarkOverrides');
+      if (!style) return;
+      const isDark = document.body.classList.contains('dark');
+      style.textContent = isDark ? `
+        .nf-card { background: #0f172a !important; border-color: #1e293b !important; }
+        h1, h2, h3, .nf-text-primary { color: #f8fafc !important; }
+        .nf-text-secondary { color: #94a3b8 !important; }
+        .nf-text-muted { color: #64748b !important; }
+        .nf-input, input, textarea, select { background: #0f172a !important; border-color: #1e293b !important; color: #e2e8f0 !important; }
+        .nf-bg-subtle { background: #1e293b !important; }
+        .nf-border-subtle { border-color: #1e293b !important; }
+        .section-title { color: #e2e8f0 !important; }
+        .section-title .title-dot { background: #fbbf24 !important; }
+        .toggle-label { color: #e2e8f0 !important; }
+        .toggle-label small { color: #64748b !important; }
+        .toggle-row { border-bottom-color: #1e293b !important; }
+        .toggle-slider { background-color: #334155 !important; }
+        .toggle-switch input:checked + .toggle-slider { background-color: #f59e0b !important; }
+        .input-group label { color: #94a3b8 !important; }
+        .result-area {
+          background: linear-gradient(135deg, #1c1917 0%, #292524 100%) !important;
+          border-color: #78350f !important;
+        }
+        .result-area.has-results {
+          background: linear-gradient(135deg, #1c1917 0%, #292524 50%, #44403c 100%) !important;
+          border-color: #f59e0b !important;
+        }
+        .result-placeholder { color: #a8a29e !important; }
+        .result-placeholder svg { color: #f59e0b !important; }
+        .preset-btn {
+          background: #0f172a !important;
+          border-color: #1e293b !important;
+          color: #e2e8f0 !important;
+        }
+        .preset-btn:hover {
+          border-color: #f59e0b !important;
+          background: #1c1917 !important;
+        }
+        .preset-btn.active {
+          border-color: #f59e0b !important;
+          background: #292524 !important;
+          color: #fbbf24 !important;
+        }
+        .preset-btn span[style*="color:#94a3b8"] { color: #64748b !important; }
+        .history-item {
+          background: #1e293b !important;
+          border-color: #334155 !important;
+        }
+        .history-item:hover {
+          background: #292524 !important;
+          border-color: #78350f !important;
+        }
+        .history-clear-btn { color: #64748b !important; }
+        .history-clear-btn:hover { color: #f87171 !important; background: #1c1917 !important; }
+        .history-time { color: #64748b !important; }
+        .history-item span[style*="color:#cbd5e1"] { color: #475569 !important; }
+        .pick-btn {
+          background: linear-gradient(135deg, #d97706, #b45309) !important;
+        }
+        .pick-btn:hover {
+          background: linear-gradient(135deg, #b45309, #92400e) !important;
+        }
+      ` : '';
+    }
+
+    // Override the shared updateBodyDarkStyles to add our custom overrides
+    const _origUpdateBodyDarkStyles = typeof updateBodyDarkStyles === 'function' ? updateBodyDarkStyles : null;
+    if (_origUpdateBodyDarkStyles) {
+      updateBodyDarkStyles = function() {
+        _origUpdateBodyDarkStyles();
+        updateNumberPickerDarkStyles();
+      };
+    }
+
+    /* --- Init --- */
+    document.addEventListener('DOMContentLoaded', () => {
+      renderPage();
+      // Re-observe dark mode
+      const darkObs = new MutationObserver(() => updateNumberPickerDarkStyles());
+      darkObs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+      updateNumberPickerDarkStyles();
+    });
+  </script>
+</body>
+</html>

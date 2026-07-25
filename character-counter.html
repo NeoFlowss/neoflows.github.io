@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>글자수 세기 (실시간 문자·바이트 계산기) | Neoflows Tools</title>
+  <meta name="description" content="공백 포함/제외 글자 수, 단어 수, 줄 수, 문장 수, 단락 수, UTF-8 바이트 수, 한국어 글자 수를 실시간으로 계산합니다.">
+  <!-- Google Fonts (Noto Sans KR) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Shared Styles -->
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    /* ======================================== */
+    /*  Character Counter Page Styles           */
+    /*  Theme: CYAN (#0891b2)                   */
+    /* ======================================== */
+
+    /* Page layout */
+    .cc-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Main content area */
+    .cc-main {
+      flex: 1;
+      padding: 1.5rem 1rem 2rem;
+    }
+
+    /* Textarea card */
+    .cc-textarea-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 1.5rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+      transition: box-shadow 0.2s ease;
+    }
+    .cc-textarea-card:focus-within {
+      box-shadow: 0 0 0 3px rgba(8,145,178,0.12), 0 4px 16px rgba(8,145,178,0.08);
+      border-color: #0891b2;
+    }
+
+    /* Textarea */
+    .cc-textarea {
+      width: 100%;
+      min-height: 200px;
+      padding: 1rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 1rem;
+      font-size: 1rem;
+      font-family: 'Noto Sans KR', system-ui, sans-serif;
+      line-height: 1.75;
+      resize: vertical;
+      outline: none;
+      background: #f8fafc;
+      color: #1e293b;
+      transition: all 0.15s ease;
+    }
+    .cc-textarea:focus {
+      border-color: #0891b2;
+      box-shadow: 0 0 0 3px rgba(8,145,178,0.1);
+      background: white;
+    }
+    .cc-textarea::placeholder {
+      color: #94a3b8;
+      font-weight: 400;
+    }
+
+    /* Action bar */
+    .cc-action-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    /* Action bar left */
+    .cc-action-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* Char count badge */
+    .cc-count-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.625rem;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      background: rgba(8,145,178,0.08);
+      color: #0891b2;
+      border: 1px solid rgba(8,145,178,0.15);
+    }
+    .cc-count-badge svg {
+      width: 0.875rem;
+      height: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    /* Action buttons */
+    .cc-action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.5rem 1rem;
+      border-radius: 0.625rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      border: 1px solid #e2e8f0;
+      background: white;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .cc-action-btn:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+    .cc-action-btn:active {
+      transform: scale(0.97);
+    }
+    .cc-action-btn svg {
+      width: 0.875rem;
+      height: 0.875rem;
+      flex-shrink: 0;
+    }
+    .cc-action-btn.primary {
+      background: linear-gradient(135deg, #0891b2, #06b6d4);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 2px 8px rgba(8,145,178,0.25);
+    }
+    .cc-action-btn.primary:hover {
+      background: linear-gradient(135deg, #0e7490, #0891b2);
+      box-shadow: 0 4px 12px rgba(8,145,178,0.35);
+    }
+    .cc-action-btn.danger {
+      color: #e11d48;
+      border-color: rgba(225,29,72,0.2);
+    }
+    .cc-action-btn.danger:hover {
+      background: rgba(225,29,72,0.05);
+      border-color: rgba(225,29,72,0.3);
+    }
+
+    /* Stats grid */
+    .cc-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+
+    /* Stat card */
+    .cc-stat-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 1.25rem;
+      padding: 1.25rem;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .cc-stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #0891b2, #06b6d4);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .cc-stat-card.active::before {
+      opacity: 1;
+    }
+    .cc-stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+    }
+
+    /* Stat icon */
+    .cc-stat-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 0.75rem;
+      background: rgba(8,145,178,0.08);
+      color: #0891b2;
+      transition: all 0.2s ease;
+    }
+    .cc-stat-card.active .cc-stat-icon {
+      background: linear-gradient(135deg, #0891b2, #06b6d4);
+      color: white;
+      box-shadow: 0 4px 12px rgba(8,145,178,0.3);
+    }
+    .cc-stat-icon svg {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+
+    /* Stat value */
+    .cc-stat-value {
+      font-size: 1.75rem;
+      font-weight: 900;
+      color: #0f172a;
+      line-height: 1;
+      margin-bottom: 0.375rem;
+      transition: all 0.15s ease;
+      font-variant-numeric: tabular-nums;
+    }
+    .cc-stat-card.active .cc-stat-value {
+      background: linear-gradient(135deg, #0891b2, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Stat label */
+    .cc-stat-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #64748b;
+      line-height: 1.3;
+    }
+
+    /* Second row - detail cards */
+    .cc-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    /* Detail card */
+    .cc-detail-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 1.25rem;
+      padding: 1rem 1.25rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      transition: all 0.2s ease;
+    }
+    .cc-detail-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+    }
+    .cc-detail-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .cc-detail-left {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+    .cc-detail-icon {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(8,145,178,0.06);
+      color: #0891b2;
+      flex-shrink: 0;
+    }
+    .cc-detail-icon svg {
+      width: 1rem;
+      height: 1rem;
+    }
+    .cc-detail-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #475569;
+    }
+    .cc-detail-value {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #0891b2;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Korean chars highlight card */
+    .cc-korean-card {
+      background: linear-gradient(135deg, rgba(8,145,178,0.04), rgba(6,182,212,0.06));
+      border-color: rgba(8,145,178,0.15);
+    }
+    .cc-korean-card .cc-detail-value {
+      font-size: 1.375rem;
+    }
+
+    /* Paragraph card - spans 2 columns */
+    .cc-paragraph-card {
+      grid-column: span 2;
+    }
+
+    /* Reading info card */
+    .cc-info-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 1.25rem;
+      padding: 1.25rem;
+      margin-top: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .cc-info-title {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: #475569;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .cc-info-title svg {
+      width: 1rem;
+      height: 1rem;
+      color: #0891b2;
+    }
+    .cc-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.75rem;
+    }
+    .cc-info-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.625rem 0.875rem;
+      background: #f8fafc;
+      border-radius: 0.75rem;
+      border: 1px solid #f1f5f9;
+    }
+    .cc-info-item-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #64748b;
+    }
+    .cc-info-item-value {
+      font-size: 0.875rem;
+      font-weight: 800;
+      color: #0891b2;
+    }
+
+    /* Paste hint */
+    .cc-paste-hint {
+      position: relative;
+    }
+    .cc-paste-hint::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 1rem;
+      pointer-events: none;
+      transition: box-shadow 0.2s ease;
+    }
+    .cc-textarea:focus ~ .cc-paste-hint::after {
+      box-shadow: none;
+    }
+
+    /* Value pop animation */
+    @keyframes valuePop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .cc-value-pop {
+      animation: valuePop 0.15s ease-out;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .cc-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .cc-detail-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .cc-paragraph-card {
+        grid-column: span 1;
+      }
+      .cc-textarea {
+        min-height: 160px;
+        font-size: 0.9375rem;
+      }
+      .cc-stat-value {
+        font-size: 1.5rem;
+      }
+      .cc-action-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .cc-action-left {
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .cc-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+      }
+      .cc-stat-card {
+        padding: 1rem;
+      }
+      .cc-stat-value {
+        font-size: 1.375rem;
+      }
+      .cc-detail-grid {
+        grid-template-columns: 1fr;
+      }
+      .cc-info-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    /* ======================================== */
+    /*  Dark Mode Overrides                      */
+    /* ======================================== */
+    body.dark .cc-textarea-card {
+      background: #0f172a;
+      border-color: #1e293b;
+    }
+    body.dark .cc-textarea-card:focus-within {
+      box-shadow: 0 0 0 3px rgba(8,145,178,0.15), 0 4px 16px rgba(8,145,178,0.1);
+      border-color: #0891b2;
+    }
+    body.dark .cc-textarea {
+      background: #020617;
+      border-color: #1e293b;
+      color: #e2e8f0;
+    }
+    body.dark .cc-textarea:focus {
+      border-color: #0891b2;
+      box-shadow: 0 0 0 3px rgba(8,145,178,0.15);
+      background: #0f172a;
+    }
+    body.dark .cc-textarea::placeholder {
+      color: #475569;
+    }
+    body.dark .cc-stat-card {
+      background: #0f172a;
+      border-color: #1e293b;
+    }
+    body.dark .cc-stat-card:hover {
+      box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    }
+    body.dark .cc-stat-value {
+      color: #f8fafc;
+    }
+    body.dark .cc-stat-label {
+      color: #94a3b8;
+    }
+    body.dark .cc-detail-card {
+      background: #0f172a;
+      border-color: #1e293b;
+    }
+    body.dark .cc-detail-card:hover {
+      box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    }
+    body.dark .cc-detail-label {
+      color: #94a3b8;
+    }
+    body.dark .cc-korean-card {
+      background: linear-gradient(135deg, rgba(8,145,178,0.08), rgba(6,182,212,0.05));
+      border-color: rgba(8,145,178,0.2);
+    }
+    body.dark .cc-info-card {
+      background: #0f172a;
+      border-color: #1e293b;
+    }
+    body.dark .cc-info-title {
+      color: #94a3b8;
+    }
+    body.dark .cc-info-item {
+      background: #020617;
+      border-color: #1e293b;
+    }
+    body.dark .cc-info-item-label {
+      color: #64748b;
+    }
+    body.dark .cc-count-badge {
+      background: rgba(8,145,178,0.12);
+      color: #22d3ee;
+      border-color: rgba(8,145,178,0.25);
+    }
+    body.dark .cc-action-btn {
+      background: #0f172a;
+      color: #94a3b8;
+      border-color: #1e293b;
+    }
+    body.dark .cc-action-btn:hover {
+      background: #1e293b;
+      border-color: #334155;
+    }
+  </style>
+</head>
+<body>
+  <div class="cc-page">
+    <!-- Header -->
+    <div id="header"></div>
+
+    <!-- Main Content -->
+    <main class="cc-main">
+      <div class="nf-container" style="max-width:56rem;">
+
+        <!-- Textarea Card -->
+        <div class="cc-textarea-card animate-fade-in-up">
+          <textarea
+            id="ccInput"
+            class="cc-textarea"
+            placeholder="여기에 텍스트를 입력하거나 붙여넣기하세요...&#10;&#10;글자 수, 단어 수, 줄 수, 바이트 수 등이 실시간으로 계산됩니다."
+            spellcheck="false"
+            autofocus
+          ></textarea>
+
+          <!-- Action Bar -->
+          <div class="cc-action-bar">
+            <div class="cc-action-left">
+              <div class="cc-count-badge" id="ccQuickCount">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span id="ccQuickCountText">0 글자</span>
+              </div>
+              <div class="cc-count-badge">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7c-2 0-3 1-3 3zm12 0H8m8 0v2m-8-2v2"/></svg>
+                <span id="ccQuickBytes">0 바이트</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+              <button class="cc-action-btn primary" onclick="ccPaste()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                붙여넣기
+              </button>
+              <button class="cc-action-btn" onclick="ccCopyText()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                텍스트 복사
+              </button>
+              <button class="cc-action-btn" onclick="ccCopyStats()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                통계 복사
+              </button>
+              <button class="cc-action-btn danger" onclick="ccClear()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                초기화
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Primary Stats Grid (4 columns) -->
+        <div class="cc-stats-grid animate-fade-in-up delay-2">
+          <!-- Total Characters -->
+          <div class="cc-stat-card" id="statTotal">
+            <div class="cc-stat-icon">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+            </div>
+            <div class="cc-stat-value" id="valTotal">0</div>
+            <div class="cc-stat-label">공백 포함 글자</div>
+          </div>
+
+          <!-- Characters without spaces -->
+          <div class="cc-stat-card" id="statNoSpace">
+            <div class="cc-stat-icon">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h10M4 14h16M4 18h8"/></svg>
+            </div>
+            <div class="cc-stat-value" id="valNoSpace">0</div>
+            <div class="cc-stat-label">공백 제외 글자</div>
+          </div>
+
+          <!-- Word Count -->
+          <div class="cc-stat-card" id="statWords">
+            <div class="cc-stat-icon">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            </div>
+            <div class="cc-stat-value" id="valWords">0</div>
+            <div class="cc-stat-label">단어 수</div>
+          </div>
+
+          <!-- Line Count -->
+          <div class="cc-stat-card" id="statLines">
+            <div class="cc-stat-icon">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h16M4 12h16M4 19h16"/></svg>
+            </div>
+            <div class="cc-stat-value" id="valLines">0</div>
+            <div class="cc-stat-label">줄 수</div>
+          </div>
+        </div>
+
+        <!-- Detail Stats Grid (3 columns) -->
+        <div class="cc-detail-grid animate-fade-in-up delay-3">
+          <!-- Sentence Count -->
+          <div class="cc-detail-card">
+            <div class="cc-detail-row">
+              <div class="cc-detail-left">
+                <div class="cc-detail-icon">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+                </div>
+                <span class="cc-detail-label">문장 수</span>
+              </div>
+              <span class="cc-detail-value" id="valSentences">0</span>
+            </div>
+          </div>
+
+          <!-- Paragraph Count -->
+          <div class="cc-detail-card">
+            <div class="cc-detail-row">
+              <div class="cc-detail-left">
+                <div class="cc-detail-icon">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h10M4 18h7"/></svg>
+                </div>
+                <span class="cc-detail-label">단락 수</span>
+              </div>
+              <span class="cc-detail-value" id="valParagraphs">0</span>
+            </div>
+          </div>
+
+          <!-- Byte Count -->
+          <div class="cc-detail-card">
+            <div class="cc-detail-row">
+              <div class="cc-detail-left">
+                <div class="cc-detail-icon">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                </div>
+                <span class="cc-detail-label">UTF-8 바이트</span>
+              </div>
+              <span class="cc-detail-value" id="valBytes">0</span>
+            </div>
+          </div>
+
+          <!-- Korean Characters - highlighted -->
+          <div class="cc-detail-card cc-korean-card" style="grid-column: span 1;">
+            <div class="cc-detail-row">
+              <div class="cc-detail-left">
+                <div class="cc-detail-icon" style="background:rgba(8,145,178,0.12);">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1 4l-3 3m0 0l3 3m-3-3h6M3 19h18"/></svg>
+                </div>
+                <span class="cc-detail-label" style="font-weight:700;color:#0891b2;">한국어 글자 수</span>
+              </div>
+              <span class="cc-detail-value" id="valKorean">0</span>
+            </div>
+          </div>
+
+          <!-- English Characters -->
+          <div class="cc-detail-card">
+            <div class="cc-detail-row">
+              <div class="cc-detail-left">
+                <div class="cc-detail-icon">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m-7 8h10M5 21h4"/></svg>
+                </div>
+                <span class="cc-detail-label">영어 글자 수</span>
+              </div>
+              <span class="cc-detail-value" id="valEnglish">0</span>
+            </div>
+          </div>
+
+          <!-- Numbers -->
+          <div class="cc-detail-card">
+            <div class="cc-detail-row">
+              <div class="cc-detail-left">
+                <div class="cc-detail-icon">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>
+                </div>
+                <span class="cc-detail-label">숫자 수</span>
+              </div>
+              <span class="cc-detail-value" id="valNumbers">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reading / Additional Info Card -->
+        <div class="cc-info-card animate-fade-in-up delay-4">
+          <div class="cc-info-title">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            추가 정보
+          </div>
+          <div class="cc-info-grid">
+            <div class="cc-info-item">
+              <span class="cc-info-item-label">읽기 시간 (한국어)</span>
+              <span class="cc-info-item-value" id="valReadTime">0초</span>
+            </div>
+            <div class="cc-info-item">
+              <span class="cc-info-item-label">읽기 시간 (영어)</span>
+              <span class="cc-info-item-value" id="valReadTimeEn">0초</span>
+            </div>
+            <div class="cc-info-item">
+              <span class="cc-info-item-label">원고지 매수</span>
+              <span class="cc-info-item-value" id="valManuscript">0매</span>
+            </div>
+            <div class="cc-info-item">
+              <span class="cc-info-item-label">말하기 시간</span>
+              <span class="cc-info-item-value" id="valSpeakTime">0분</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <div id="footer"></div>
+  </div>
+
+  <!-- Dark Mode Overrides -->
+  <style id="nfDarkOverrides"></style>
+
+  <!-- Shared JS -->
+  <script src="js/common.js"></script>
+
+  <script>
+    // ========================================
+    //  Character Counter - Core Logic
+    // ========================================
+
+    const textarea = document.getElementById('ccInput');
+
+    // Previous values for pop animation
+    const prevValues = {
+      total: 0, noSpace: 0, words: 0, lines: 0,
+      sentences: 0, paragraphs: 0, bytes: 0, korean: 0,
+      english: 0, numbers: 0
+    };
+
+    // Korean reading speed: ~400 chars/min (including spaces)
+    // English reading speed: ~200 words/min
+    // Speaking speed: ~150 words/min (Korean ~300 chars/min)
+    // Manuscript paper: 200 chars per page (standard Korean manuscript)
+
+    /** Calculate all stats from the given text */
+    function calculateStats(text) {
+      // Total characters (including spaces)
+      const total = text.length;
+
+      // Characters without spaces
+      const noSpace = text.replace(/\s/g, '').length;
+
+      // Word count - split by whitespace, filter empty
+      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+
+      // Line count
+      const lines = text === '' ? 0 : text.split('\n').length;
+
+      // Sentence count - split by . ! ? and Korean punctuation
+      let sentences = 0;
+      if (text.trim()) {
+        const matches = text.match(/[^.!?。！？\n]+[.!?。！？]+/g);
+        sentences = matches ? matches.length : 0;
+      }
+
+      // Paragraph count - split by double newline or single newline with non-empty
+      let paragraphs = 0;
+      if (text.trim()) {
+        const paras = text.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+        paragraphs = paras.length;
+        // If no double newlines, count single lines as paragraphs
+        if (paragraphs <= 1 && text.includes('\n')) {
+          paragraphs = text.split('\n').filter(p => p.trim().length > 0).length;
+        }
+      }
+
+      // UTF-8 byte count
+      const bytes = new Blob([text]).size;
+
+      // Korean characters (Hangul syllables)
+      const korean = (text.match(/[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/g) || []).length;
+
+      // English characters
+      const english = (text.match(/[a-zA-Z]/g) || []).length;
+
+      // Numbers
+      const numbers = (text.match(/[0-9]/g) || []).length;
+
+      // Reading time (Korean: ~400 chars/min)
+      const readTimeSec = Math.ceil((noSpace / 400) * 60);
+      const readTimeStr = formatTime(readTimeSec);
+
+      // Reading time (English: ~200 words/min)
+      const readTimeEnSec = Math.ceil((words / 200) * 60);
+      const readTimeEnStr = formatTime(readTimeEnSec);
+
+      // Manuscript pages (200 chars per page, Korean standard)
+      const manuscriptPages = Math.ceil(noSpace / 200);
+
+      // Speaking time (Korean: ~300 chars/min)
+      const speakTimeMin = Math.ceil(noSpace / 300);
+      const speakTimeStr = speakTimeMin < 60 ? `${speakTimeMin}분` : `${Math.floor(speakTimeMin / 60)}시간 ${speakTimeMin % 60}분`;
+
+      return {
+        total, noSpace, words, lines, sentences, paragraphs,
+        bytes, korean, english, numbers,
+        readTimeStr, readTimeEnStr, manuscriptPages, speakTimeStr
+      };
+    }
+
+    /** Format seconds to human-readable string */
+    function formatTime(totalSeconds) {
+      if (totalSeconds < 60) return `${totalSeconds}초`;
+      const min = Math.floor(totalSeconds / 60);
+      const sec = totalSeconds % 60;
+      if (min < 60) return sec > 0 ? `${min}분 ${sec}초` : `${min}분`;
+      const hr = Math.floor(min / 60);
+      const remainMin = min % 60;
+      return `${hr}시간 ${remainMin}분`;
+    }
+
+    /** Animate value change with pop effect */
+    function animateValue(el, newValue, key) {
+      const formatted = newValue.toLocaleString('ko-KR');
+      el.textContent = formatted;
+      if (prevValues[key] !== newValue) {
+        el.classList.remove('cc-value-pop');
+        void el.offsetWidth; // Trigger reflow
+        el.classList.add('cc-value-pop');
+        prevValues[key] = newValue;
+      }
+    }
+
+    /** Update the stat cards active state */
+    function updateActiveStates(stats) {
+      const cards = [
+        { id: 'statTotal', val: stats.total },
+        { id: 'statNoSpace', val: stats.noSpace },
+        { id: 'statWords', val: stats.words },
+        { id: 'statLines', val: stats.lines }
+      ];
+      cards.forEach(c => {
+        const el = document.getElementById(c.id);
+        if (el) {
+          el.classList.toggle('active', c.val > 0);
+        }
+      });
+    }
+
+    /** Main update function - called on every input event */
+    function updateStats() {
+      const text = textarea.value;
+      const stats = calculateStats(text);
+
+      // Update primary stats
+      animateValue(document.getElementById('valTotal'), stats.total, 'total');
+      animateValue(document.getElementById('valNoSpace'), stats.noSpace, 'noSpace');
+      animateValue(document.getElementById('valWords'), stats.words, 'words');
+      animateValue(document.getElementById('valLines'), stats.lines, 'lines');
+
+      // Update detail stats
+      animateValue(document.getElementById('valSentences'), stats.sentences, 'sentences');
+      animateValue(document.getElementById('valParagraphs'), stats.paragraphs, 'paragraphs');
+      animateValue(document.getElementById('valBytes'), stats.bytes, 'bytes');
+      animateValue(document.getElementById('valKorean'), stats.korean, 'korean');
+      animateValue(document.getElementById('valEnglish'), stats.english, 'english');
+      animateValue(document.getElementById('valNumbers'), stats.numbers, 'numbers');
+
+      // Update quick badges
+      document.getElementById('ccQuickCountText').textContent = `${stats.total.toLocaleString('ko-KR')} 글자`;
+      document.getElementById('ccQuickBytes').textContent = `${stats.bytes.toLocaleString('ko-KR')} 바이트`;
+
+      // Update info cards
+      document.getElementById('valReadTime').textContent = stats.readTimeStr;
+      document.getElementById('valReadTimeEn').textContent = stats.readTimeEnStr;
+      document.getElementById('valManuscript').textContent = `${stats.manuscriptPages}매`;
+      document.getElementById('valSpeakTime').textContent = stats.speakTimeStr;
+
+      // Update active states on primary cards
+      updateActiveStates(stats);
+
+      // Save text to localStorage
+      try {
+        localStorage.setItem('cc_text', text);
+      } catch (e) { /* ignore */ }
+    }
+
+    // ========================================
+    //  Action Functions
+    // ========================================
+
+    /** Paste from clipboard */
+    async function ccPaste() {
+      try {
+        const text = await navigator.clipboard.readText();
+        textarea.value = text;
+        textarea.focus();
+        updateStats();
+        showToast('클립보드에서 붙여넣었습니다!');
+      } catch (e) {
+        showToast('클립보드 접근이 거부되었습니다.');
+      }
+    }
+
+    /** Copy text to clipboard */
+    function ccCopyText() {
+      const text = textarea.value;
+      if (!text) {
+        showToast('복사할 텍스트가 없습니다.');
+        return;
+      }
+      copyToClipboard(text, '텍스트가 복사되었습니다!');
+    }
+
+    /** Copy stats as formatted text */
+    function ccCopyStats() {
+      const text = textarea.value;
+      if (!text) {
+        showToast('통계를 계산할 텍스트가 없습니다.');
+        return;
+      }
+      const stats = calculateStats(text);
+      const lines = [
+        `📝 글자수 세기 결과`,
+        `─────────────────────`,
+        `공백 포함: ${stats.total.toLocaleString()}자`,
+        `공백 제외: ${stats.noSpace.toLocaleString()}자`,
+        `단어 수: ${stats.words.toLocaleString()}개`,
+        `줄 수: ${stats.lines.toLocaleString()}줄`,
+        `문장 수: ${stats.sentences.toLocaleString()}개`,
+        `단락 수: ${stats.paragraphs.toLocaleString()}개`,
+        `UTF-8 바이트: ${stats.bytes.toLocaleString()}B`,
+        `한국어: ${stats.korean.toLocaleString()}자`,
+        `영어: ${stats.english.toLocaleString()}자`,
+        `숫자: ${stats.numbers.toLocaleString()}개`,
+        `원고지: ${stats.manuscriptPages}매`,
+        `읽기 시간: ${stats.readTimeStr}`,
+        `말하기 시간: ${stats.speakTimeStr}`,
+        `─────────────────────`,
+        `Neoflows 글자수 세기`
+      ].join('\n');
+      copyToClipboard(lines, '통계 결과가 복사되었습니다!');
+    }
+
+    /** Clear textarea */
+    function ccClear() {
+      if (!textarea.value) return;
+      textarea.value = '';
+      textarea.focus();
+      updateStats();
+      showToast('텍스트가 초기화되었습니다.');
+    }
+
+    // ========================================
+    //  Initialization
+    // ========================================
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Render header and footer
+      document.getElementById('header').innerHTML = toolHeaderHTML(
+        '글자수 세기',
+        '공백 포함/제외 글자 수, 원고지 분량, 바이트 수를 실시간 계산합니다.'
+      );
+      document.getElementById('footer').innerHTML = toolFooterHTML();
+
+      // Restore saved text
+      try {
+        const saved = localStorage.getItem('cc_text');
+        if (saved) {
+          textarea.value = saved;
+        }
+      } catch (e) { /* ignore */ }
+
+      // Initial stats calculation
+      updateStats();
+
+      // Listen for input events
+      textarea.addEventListener('input', updateStats);
+
+      // Keyboard shortcut: Ctrl/Cmd + Shift + C = copy stats
+      document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
+          e.preventDefault();
+          ccCopyStats();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

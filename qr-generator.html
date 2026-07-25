@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR 코드 생성기 (무료 온라인) | Neoflows Tools</title>
+  <meta name="description" content="무료 QR 코드 생성기. URL, 텍스트를 고화질 QR 코드로 변환하세요. 크기, 색상, 오류 수정 수준을 커스텀하고 PNG/SVG로 다운로드.">
+  <!-- Google Fonts (Noto Sans KR) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Shared Styles -->
+  <link rel="stylesheet" href="css/common.css">
+  <!-- QR Code Library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    /* ======================================== */
+    /*  QR Code Generator Page Styles            */
+    /*  Theme: TEAL (#0d9488)                    */
+    /* ======================================== */
+
+    /* Section title with dot */
+    .qr-section-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    body.dark .qr-section-title { color: #e2e8f0; }
+    .qr-section-title-dot {
+      width: 0.375rem;
+      height: 0.375rem;
+      border-radius: 50%;
+      background: #0d9488;
+      flex-shrink: 0;
+    }
+
+    /* Input area */
+    .qr-input-wrapper {
+      position: relative;
+    }
+    .qr-input-wrapper textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      padding-right: 3.5rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 1rem;
+      font-size: 0.875rem;
+      font-family: inherit;
+      background: white;
+      color: #1e293b;
+      resize: vertical;
+      min-height: 88px;
+      outline: none;
+      transition: all 0.2s ease;
+      line-height: 1.5;
+    }
+    .qr-input-wrapper textarea:focus {
+      border-color: #0d9488;
+      box-shadow: 0 0 0 3px rgba(13,148,136,0.15);
+    }
+    .qr-input-wrapper textarea::placeholder { color: #94a3b8; }
+    body.dark .qr-input-wrapper textarea {
+      background: #0f172a;
+      border-color: #1e293b;
+      color: #e2e8f0;
+    }
+    body.dark .qr-input-wrapper textarea::placeholder { color: #475569; }
+    body.dark .qr-input-wrapper textarea:focus {
+      border-color: #0d9488;
+      box-shadow: 0 0 0 3px rgba(13,148,136,0.2);
+    }
+    .qr-clear-btn {
+      position: absolute;
+      top: 0.625rem;
+      right: 0.625rem;
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: 50%;
+      border: 1px solid #e2e8f0;
+      background: white;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .qr-clear-btn:hover {
+      background: #f1f5f9;
+      color: #64748b;
+      border-color: #cbd5e1;
+    }
+    body.dark .qr-clear-btn {
+      background: #1e293b;
+      border-color: #334155;
+      color: #64748b;
+    }
+    body.dark .qr-clear-btn:hover {
+      background: #334155;
+      color: #94a3b8;
+    }
+
+    /* Character counter */
+    .qr-char-count {
+      text-align: right;
+      font-size: 0.6875rem;
+      color: #94a3b8;
+      font-weight: 500;
+      margin-top: 0.375rem;
+    }
+    .qr-char-count.warning { color: #f59e0b; }
+    .qr-char-count.danger { color: #ef4444; }
+
+    /* Options grid */
+    .qr-options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .qr-option-group label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 0.375rem;
+    }
+    body.dark .qr-option-group label { color: #94a3b8; }
+    .qr-option-group select {
+      width: 100%;
+      padding: 0.625rem 0.875rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.75rem;
+      font-size: 0.8125rem;
+      font-family: inherit;
+      background: white;
+      color: #1e293b;
+      outline: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      padding-right: 2rem;
+    }
+    .qr-option-group select:focus {
+      border-color: #0d9488;
+      box-shadow: 0 0 0 3px rgba(13,148,136,0.15);
+    }
+    body.dark .qr-option-group select {
+      background-color: #0f172a;
+      border-color: #1e293b;
+      color: #e2e8f0;
+    }
+    body.dark .qr-option-group select:focus {
+      border-color: #0d9488;
+      box-shadow: 0 0 0 3px rgba(13,148,136,0.2);
+    }
+
+    /* Color picker group */
+    .qr-color-picker {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .qr-color-picker input[type="color"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 2.5rem;
+      height: 2.5rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      padding: 2px;
+      background: transparent;
+      transition: border-color 0.15s;
+      flex-shrink: 0;
+    }
+    .qr-color-picker input[type="color"]:hover {
+      border-color: #0d9488;
+    }
+    body.dark .qr-color-picker input[type="color"] {
+      border-color: #334155;
+    }
+    .qr-color-picker input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    .qr-color-picker input[type="color"]::-webkit-color-swatch {
+      border: none;
+      border-radius: 0.5rem;
+    }
+    .qr-color-picker input[type="color"]::-moz-color-swatch {
+      border: none;
+      border-radius: 0.5rem;
+    }
+    .qr-color-hex {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.5rem;
+      font-size: 0.75rem;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      background: #f8fafc;
+      color: #475569;
+      outline: none;
+      text-transform: uppercase;
+      transition: all 0.15s;
+    }
+    .qr-color-hex:focus {
+      border-color: #0d9488;
+      background: white;
+    }
+    body.dark .qr-color-hex {
+      background: #1e293b;
+      border-color: #334155;
+      color: #94a3b8;
+    }
+
+    /* Size selector pills */
+    .qr-size-pills {
+      display: flex;
+      gap: 0.375rem;
+    }
+    .qr-size-pill {
+      flex: 1;
+      padding: 0.5rem 0.25rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 0.625rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #64748b;
+      background: white;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .qr-size-pill:hover {
+      border-color: #99f6e4;
+      background: #f0fdfa;
+    }
+    .qr-size-pill.active {
+      border-color: #0d9488;
+      background: linear-gradient(135deg, #0d9488, #14b8a6);
+      color: white;
+      box-shadow: 0 2px 8px rgba(13,148,136,0.3);
+    }
+    body.dark .qr-size-pill {
+      background: #0f172a;
+      border-color: #334155;
+      color: #94a3b8;
+    }
+    body.dark .qr-size-pill:hover {
+      border-color: #0d9488;
+      background: rgba(13,148,136,0.08);
+    }
+    body.dark .qr-size-pill.active {
+      background: linear-gradient(135deg, #0d9488, #14b8a6);
+      border-color: #0d9488;
+      color: white;
+    }
+
+    /* Error correction pills */
+    .qr-ec-pills {
+      display: flex;
+      gap: 0.375rem;
+    }
+    .qr-ec-pill {
+      flex: 1;
+      padding: 0.5rem 0.25rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 0.625rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #64748b;
+      background: white;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .qr-ec-pill:hover {
+      border-color: #99f6e4;
+      background: #f0fdfa;
+    }
+    .qr-ec-pill.active {
+      border-color: #0d9488;
+      background: linear-gradient(135deg, #0d9488, #14b8a6);
+      color: white;
+      box-shadow: 0 2px 8px rgba(13,148,136,0.3);
+    }
+    body.dark .qr-ec-pill {
+      background: #0f172a;
+      border-color: #334155;
+      color: #94a3b8;
+    }
+    body.dark .qr-ec-pill:hover {
+      border-color: #0d9488;
+      background: rgba(13,148,136,0.08);
+    }
+    body.dark .qr-ec-pill.active {
+      background: linear-gradient(135deg, #0d9488, #14b8a6);
+      border-color: #0d9488;
+      color: white;
+    }
+    .qr-ec-desc {
+      font-size: 0.625rem;
+      color: #94a3b8;
+      margin-top: 0.25rem;
+    }
+    body.dark .qr-ec-desc { color: #64748b; }
+
+    /* QR Preview area */
+    .qr-preview-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 280px;
+      border: 2px dashed #e2e8f0;
+      border-radius: 1.25rem;
+      background: #f8fafc;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .qr-preview-area.has-qr {
+      border-style: solid;
+      border-color: #99f6e4;
+      background: white;
+    }
+    body.dark .qr-preview-area {
+      background: #0f172a;
+      border-color: #1e293b;
+    }
+    body.dark .qr-preview-area.has-qr {
+      background: #0f172a;
+      border-color: rgba(13,148,136,0.3);
+    }
+    .qr-preview-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 2rem;
+      text-align: center;
+    }
+    .qr-preview-placeholder svg {
+      color: #cbd5e1;
+    }
+    .qr-preview-placeholder p {
+      font-size: 0.8125rem;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+    body.dark .qr-preview-placeholder svg { color: #475569; }
+    body.dark .qr-preview-placeholder p { color: #64748b; }
+
+    /* QR code container */
+    #qrCodeDisplay {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      animation: scaleIn 0.35s ease-out;
+    }
+    #qrCodeDisplay img,
+    #qrCodeDisplay canvas {
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    /* Generate button */
+    .qr-generate-btn {
+      width: 100%;
+      padding: 0.875rem 1.5rem;
+      border-radius: 0.875rem;
+      background: linear-gradient(135deg, #0d9488, #14b8a6);
+      color: white;
+      font-size: 0.9375rem;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 14px rgba(13,148,136,0.35);
+      transition: all 0.2s ease;
+    }
+    .qr-generate-btn:hover {
+      background: linear-gradient(135deg, #0f766e, #0d9488);
+      box-shadow: 0 6px 20px rgba(13,148,136,0.45);
+      transform: translateY(-1px);
+    }
+    .qr-generate-btn:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    /* Action buttons row */
+    .qr-actions-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .qr-action-btn {
+      flex: 1;
+      min-width: 0;
+      padding: 0.625rem 0.75rem;
+      border-radius: 0.75rem;
+      border: 1.5px solid #e2e8f0;
+      background: white;
+      color: #475569;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.375rem;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .qr-action-btn:hover {
+      border-color: #0d9488;
+      background: #f0fdfa;
+      color: #0d9488;
+    }
+    .qr-action-btn:active { transform: scale(0.97); }
+    .qr-action-btn svg { width: 0.875rem; height: 0.875rem; flex-shrink: 0; }
+    body.dark .qr-action-btn {
+      background: #0f172a;
+      border-color: #334155;
+      color: #94a3b8;
+    }
+    body.dark .qr-action-btn:hover {
+      border-color: #0d9488;
+      background: rgba(13,148,136,0.08);
+      color: #2dd4bf;
+    }
+
+    /* Quick presets */
+    .qr-preset-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+    }
+    .qr-preset-btn {
+      padding: 0.625rem 0.75rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 0.75rem;
+      background: white;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .qr-preset-btn:hover {
+      border-color: #99f6e4;
+      background: #f0fdfa;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .qr-preset-btn:active { transform: translateY(0) scale(0.98); }
+    .qr-preset-icon {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .qr-preset-icon svg { width: 0.875rem; height: 0.875rem; }
+    .qr-preset-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #334155;
+      line-height: 1.3;
+    }
+    .qr-preset-url {
+      font-size: 0.625rem;
+      color: #94a3b8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 120px;
+    }
+    body.dark .qr-preset-btn {
+      background: #0f172a;
+      border-color: #1e293b;
+    }
+    body.dark .qr-preset-btn:hover {
+      border-color: rgba(13,148,136,0.4);
+      background: rgba(13,148,136,0.06);
+    }
+    body.dark .qr-preset-label { color: #e2e8f0; }
+    body.dark .qr-preset-url { color: #64748b; }
+
+    /* Info box */
+    .qr-info-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.625rem;
+      padding: 0.75rem 1rem;
+      background: #f0fdfa;
+      border: 1px solid #ccfbf1;
+      border-radius: 0.875rem;
+      font-size: 0.75rem;
+      color: #0f766e;
+      line-height: 1.5;
+      font-weight: 500;
+    }
+    .qr-info-box svg { flex-shrink: 0; margin-top: 0.1rem; }
+    body.dark .qr-info-box {
+      background: rgba(13,148,136,0.08);
+      border-color: rgba(13,148,136,0.2);
+      color: #5eead4;
+    }
+
+    /* Error correction info */
+    .qr-ec-info {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.375rem;
+      margin-top: 0.5rem;
+    }
+    .qr-ec-info-item {
+      text-align: center;
+      padding: 0.375rem 0.25rem;
+      border-radius: 0.5rem;
+      background: #f8fafc;
+      border: 1px solid #f1f5f9;
+    }
+    .qr-ec-info-item.active {
+      background: #f0fdfa;
+      border-color: #99f6e4;
+    }
+    .qr-ec-info-level {
+      font-size: 0.8125rem;
+      font-weight: 800;
+      color: #0d9488;
+    }
+    .qr-ec-info-percent {
+      font-size: 0.625rem;
+      color: #94a3b8;
+      margin-top: 0.125rem;
+    }
+    body.dark .qr-ec-info-item {
+      background: #0f172a;
+      border-color: #1e293b;
+    }
+    body.dark .qr-ec-info-item.active {
+      background: rgba(13,148,136,0.08);
+      border-color: rgba(13,148,136,0.3);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .qr-options-grid {
+        grid-template-columns: 1fr;
+      }
+      .qr-preset-grid {
+        grid-template-columns: 1fr;
+      }
+      .qr-actions-row {
+        flex-direction: column;
+      }
+      .qr-action-btn {
+        flex-direction: row;
+      }
+      .qr-ec-info {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+    @media (max-width: 480px) {
+      .qr-ec-info {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <!-- Shared Scripts -->
+  <script src="js/common.js"></script>
+
+  <script>
+    // ========================================
+    //  QR Code Generator - App Logic
+    // ========================================
+
+    // State
+    let state = {
+      text: '',
+      size: 256,
+      fgColor: '#000000',
+      bgColor: '#ffffff',
+      ecLevel: 'M',
+      hasQR: false
+    };
+
+    let qrInstance = null;
+
+    const EC_LEVELS = {
+      L: { label: 'L (Low)', value: QRCode.CorrectLevel.L, percent: '7%' },
+      M: { label: 'M (Medium)', value: QRCode.CorrectLevel.M, percent: '15%' },
+      Q: { label: 'Q (Quartile)', value: QRCode.CorrectLevel.Q, percent: '25%' },
+      H: { label: 'H (High)', value: QRCode.CorrectLevel.H, percent: '30%' }
+    };
+
+    const SIZES = [128, 256, 512];
+
+    const PRESETS = [
+      {
+        label: 'Google',
+        url: 'https://www.google.com',
+        color: '#4285f4',
+        svg: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>'
+      },
+      {
+        label: 'Naver',
+        url: 'https://www.naver.com',
+        color: '#03c75a',
+        svg: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>'
+      },
+      {
+        label: 'YouTube',
+        url: 'https://www.youtube.com',
+        color: '#ff0000',
+        svg: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>'
+      },
+      {
+        label: 'GitHub',
+        url: 'https://github.com',
+        color: '#333333',
+        svg: '<svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>'
+      },
+      {
+        label: 'Daum (Kakao)',
+        url: 'https://www.daum.net',
+        color: '#fee500',
+        svg: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>'
+      },
+      {
+        label: 'Wikipedia',
+        url: 'https://www.wikipedia.org',
+        color: '#636466',
+        svg: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>'
+      }
+    ];
+
+    // Render
+    function render() {
+      const app = document.getElementById('app');
+      const charCount = state.text.length;
+      const charClass = charCount > 2000 ? 'danger' : charCount > 1000 ? 'warning' : '';
+
+      app.innerHTML = `
+        ${toolHeaderHTML('무료 QR 코드 생성기', '원하는 웹사이트 주소나 텍스트를 고화질 QR 코드로 제작합니다.')}
+
+        <main style="min-height:100vh;display:flex;flex-direction:column;padding-bottom:2rem;">
+          <div class="nf-container-sm" style="padding-top:1.5rem;padding-bottom:3rem;">
+
+            <!-- Input Card -->
+            <div class="nf-card stagger-hidden animate-fade-in-up delay-1" style="margin-bottom:1rem;">
+              <div class="qr-section-title">
+                <span class="qr-section-title-dot"></span>
+                입력 내용
+              </div>
+              <div class="qr-input-wrapper">
+                <textarea id="qrInput" placeholder="URL 또는 텍스트를 입력하세요...&#10;예: https://www.google.com" rows="3">${escapeHtml(state.text)}</textarea>
+                ${charCount > 0 ? `
+                  <button onclick="clearInput()" class="qr-clear-btn" title="지우기" aria-label="입력 지우기">
+                    <svg style="width:0.875rem;height:0.875rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                ` : ''}
+              </div>
+              <div class="qr-char-count ${charClass}">${charCount.toLocaleString()}자 / 최대 약 4,296자</div>
+
+              <!-- Quick Presets -->
+              <div style="margin-top:1rem;">
+                <div class="qr-section-title">
+                  <span class="qr-section-title-dot"></span>
+                  빠른 URL 프리셋
+                </div>
+                <div class="qr-preset-grid">
+                  ${PRESETS.map((p, i) => `
+                    <button onclick="applyPreset(${i})" class="qr-preset-btn">
+                      <div class="qr-preset-icon" style="background:${p.color}15;color:${p.color};">
+                        ${p.svg}
+                      </div>
+                      <div style="min-width:0;">
+                        <div class="qr-preset-label">${p.label}</div>
+                        <div class="qr-preset-url">${p.url}</div>
+                      </div>
+                    </button>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+
+            <!-- Settings Card -->
+            <div class="nf-card stagger-hidden animate-fade-in-up delay-2" style="margin-bottom:1rem;">
+              <div class="qr-section-title">
+                <span class="qr-section-title-dot"></span>
+                QR 코드 설정
+              </div>
+
+              <div class="qr-options-grid">
+                <!-- Size -->
+                <div class="qr-option-group">
+                  <label>크기</label>
+                  <div class="qr-size-pills">
+                    ${SIZES.map(s => `
+                      <button onclick="setSize(${s})" class="qr-size-pill ${state.size === s ? 'active' : ''}">${s}px</button>
+                    `).join('')}
+                  </div>
+                </div>
+
+                <!-- Colors -->
+                <div class="qr-option-group">
+                  <label>색상</label>
+                  <div style="display:flex;flex-direction:column;gap:0.5rem;">
+                    <div class="qr-color-picker">
+                      <input type="color" id="fgColor" value="${state.fgColor}" onchange="setFgColor(this.value)">
+                      <input type="text" class="qr-color-hex" id="fgHex" value="${state.fgColor.toUpperCase()}" onchange="setFgColor(this.value)" maxlength="7">
+                      <span style="font-size:0.6875rem;color:#94a3b8;flex-shrink:0;">전경</span>
+                    </div>
+                    <div class="qr-color-picker">
+                      <input type="color" id="bgColor" value="${state.bgColor}" onchange="setBgColor(this.value)">
+                      <input type="text" class="qr-color-hex" id="bgHex" value="${state.bgColor.toUpperCase()}" onchange="setBgColor(this.value)" maxlength="7">
+                      <span style="font-size:0.6875rem;color:#94a3b8;flex-shrink:0;">배경</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Error Correction -->
+                <div class="qr-option-group" style="grid-column: 1 / -1;">
+                  <label>오류 수정 수준</label>
+                  <div class="qr-ec-pills">
+                    ${Object.keys(EC_LEVELS).map(level => `
+                      <button onclick="setEcLevel('${level}')" class="qr-ec-pill ${state.ecLevel === level ? 'active' : ''}">
+                        ${level}
+                      </button>
+                    `).join('')}
+                  </div>
+                  <div class="qr-ec-info">
+                    ${Object.entries(EC_LEVELS).map(([level, info]) => `
+                      <div class="qr-ec-info-item ${state.ecLevel === level ? 'active' : ''}">
+                        <div class="qr-ec-info-level">${level}</div>
+                        <div class="qr-ec-info-percent">복구 ${info.percent}</div>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Generate Button -->
+              <button onclick="generateQR()" class="qr-generate-btn" style="margin-top:1rem;" ${!state.text.trim() ? 'disabled style="margin-top:1rem;opacity:0.5;cursor:not-allowed;"' : ''}>
+                <svg style="width:1.125rem;height:1.125rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                QR 코드 생성
+              </button>
+            </div>
+
+            <!-- Preview + Actions Card -->
+            <div class="nf-card stagger-hidden animate-fade-in-up delay-3" style="margin-bottom:1rem;">
+              <div class="qr-section-title">
+                <span class="qr-section-title-dot"></span>
+                미리보기
+              </div>
+
+              <div class="qr-preview-area ${state.hasQR ? 'has-qr' : ''}" id="qrPreviewArea">
+                ${state.hasQR ? `
+                  <div id="qrCodeDisplay"></div>
+                ` : `
+                  <div class="qr-preview-placeholder">
+                    <svg style="width:3.5rem;height:3.5rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                    <p>텍스트를 입력하고 QR 코드를 생성하세요</p>
+                  </div>
+                `}
+              </div>
+
+              ${state.hasQR ? `
+                <div class="qr-actions-row" style="margin-top:1rem;">
+                  <button onclick="downloadPNG()" class="qr-action-btn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    PNG 다운로드
+                  </button>
+                  <button onclick="downloadSVG()" class="qr-action-btn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    SVG 다운로드
+                  </button>
+                  <button onclick="copyToClipboardPNG()" class="qr-action-btn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    클립보드 복사
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- Info Card -->
+            <div class="nf-card stagger-hidden animate-fade-in-up delay-4" style="padding:1.25rem;">
+              <div class="qr-info-box">
+                <svg style="width:1rem;height:1rem;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <div>
+                  <strong>오류 수정 수준 안내:</strong>
+                  L(7%)은 빠르고 간결한 QR에 적합, M(15%)은 일반용, Q(25%)은 로고가 있는 QR에 적합, H(30%)은 손상이 우려되는 환경에 적합합니다. SVG는 벡터 형식으로 해상도에 관계없이 선명합니다.
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </main>
+
+        ${toolFooterHTML()}
+      `;
+
+      // Re-render QR if exists
+      if (state.hasQR) {
+        requestAnimationFrame(() => {
+          renderQRCode();
+        });
+      }
+
+      // Setup input listener
+      const textarea = document.getElementById('qrInput');
+      if (textarea) {
+        textarea.addEventListener('input', (e) => {
+          state.text = e.target.value;
+          // Update char count in place
+          const charCountEl = document.querySelector('.qr-char-count');
+          if (charCountEl) {
+            const len = state.text.length;
+            charCountEl.textContent = `${len.toLocaleString()}자 / 최대 약 4,296자`;
+            charCountEl.className = `qr-char-count ${len > 2000 ? 'danger' : len > 1000 ? 'warning' : ''}`;
+          }
+          // Update clear button visibility
+          const wrapper = textarea.parentElement;
+          const existingBtn = wrapper.querySelector('.qr-clear-btn');
+          if (state.text.length > 0 && !existingBtn) {
+            const btn = document.createElement('button');
+            btn.className = 'qr-clear-btn';
+            btn.title = '지우기';
+            btn.setAttribute('aria-label', '입력 지우기');
+            btn.innerHTML = '<svg style="width:0.875rem;height:0.875rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+            btn.onclick = clearInput;
+            wrapper.appendChild(btn);
+          } else if (state.text.length === 0 && existingBtn) {
+            existingBtn.remove();
+          }
+        });
+      }
+    }
+
+    // Generate QR
+    function generateQR() {
+      const text = state.text.trim();
+      if (!text) {
+        showToast('텍스트나 URL을 입력해주세요.');
+        return;
+      }
+      state.hasQR = true;
+      render();
+    }
+
+    // Render QR code to DOM
+    function renderQRCode() {
+      const container = document.getElementById('qrCodeDisplay');
+      if (!container) return;
+
+      // Clear previous
+      container.innerHTML = '';
+      if (qrInstance) {
+        qrInstance = null;
+      }
+
+      try {
+        qrInstance = new QRCode(container, {
+          text: state.text,
+          width: state.size,
+          height: state.size,
+          colorDark: state.fgColor,
+          colorLight: state.bgColor,
+          correctLevel: EC_LEVELS[state.ecLevel].value
+        });
+      } catch (e) {
+        container.innerHTML = '<p style="color:#ef4444;font-size:0.8125rem;font-weight:600;">QR 코드 생성에 실패했습니다. 텍스트가 너무 길 수 있습니다.</p>';
+      }
+    }
+
+    // Escape HTML
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // Actions
+    function clearInput() {
+      state.text = '';
+      render();
+    }
+
+    function applyPreset(index) {
+      const preset = PRESETS[index];
+      state.text = preset.url;
+      state.hasQR = false;
+      render();
+      // Auto-generate
+      setTimeout(() => {
+        generateQR();
+      }, 50);
+    }
+
+    function setSize(size) {
+      state.size = size;
+      render();
+    }
+
+    function setFgColor(color) {
+      // Validate hex
+      if (/^#[0-9A-Fa-f]{6}$/.test(color)) {
+        state.fgColor = color;
+      }
+      render();
+    }
+
+    function setBgColor(color) {
+      if (/^#[0-9A-Fa-f]{6}$/.test(color)) {
+        state.bgColor = color;
+      }
+      render();
+    }
+
+    function setEcLevel(level) {
+      state.ecLevel = level;
+      if (state.hasQR) {
+        render();
+      } else {
+        render();
+      }
+    }
+
+    // Download PNG
+    function downloadPNG() {
+      const container = document.getElementById('qrCodeDisplay');
+      if (!container) {
+        showToast('QR 코드를 먼저 생성해주세요.');
+        return;
+      }
+
+      // qrcodejs creates a canvas
+      const canvas = container.querySelector('canvas');
+      const img = container.querySelector('img');
+
+      if (canvas) {
+        const link = document.createElement('a');
+        link.download = `qrcode-${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('PNG 파일이 다운로드됩니다!');
+      } else if (img) {
+        // Fallback: draw img to canvas
+        const cvs = document.createElement('canvas');
+        cvs.width = state.size;
+        cvs.height = state.size;
+        const ctx = cvs.getContext('2d');
+        ctx.drawImage(img, 0, 0, state.size, state.size);
+        const link = document.createElement('a');
+        link.download = `qrcode-${Date.now()}.png`;
+        link.href = cvs.toDataURL('image/png');
+        link.click();
+        showToast('PNG 파일이 다운로드됩니다!');
+      } else {
+        showToast('QR 코드를 찾을 수 없습니다.');
+      }
+    }
+
+    // Generate SVG manually from QR module data
+    function generateSVGString() {
+      const container = document.getElementById('qrCodeDisplay');
+      if (!container) return null;
+
+      const canvas = container.querySelector('canvas');
+      if (!canvas) {
+        // Try to get from img
+        const img = container.querySelector('img');
+        if (!img) return null;
+
+        // Create a temporary canvas and draw the image
+        const cvs = document.createElement('canvas');
+        cvs.width = img.naturalWidth || state.size;
+        cvs.height = img.naturalHeight || state.size;
+        const ctx = cvs.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        return canvasToSVG(cvs);
+      }
+
+      return canvasToSVG(canvas);
+    }
+
+    function canvasToSVG(canvas) {
+      const width = canvas.width;
+      const height = canvas.height;
+      const ctx = canvas.getContext('2d');
+      const imageData = ctx.getImageData(0, 0, width, height);
+      const pixels = imageData.data;
+
+      // Find the actual QR module grid size by scanning the image
+      // We'll create an SVG with rectangles for dark pixels
+      // For efficiency, group consecutive dark pixels into rows
+
+      let rects = [];
+      const bgColor = state.bgColor.toUpperCase();
+      const fgColor = state.fgColor.toUpperCase();
+
+      // Scan for modules: find the quiet zone border to determine module size
+      let moduleSize = 1;
+      let startRow = 0;
+      let startCol = 0;
+
+      // Detect module size from the pattern
+      // QR codes have finder patterns at corners. Let's detect the module size.
+      // Simplified: we'll detect from the first dark pixel column
+      let firstDarkRow = -1;
+      let firstDarkCol = -1;
+      outer:
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const idx = (y * width + x) * 4;
+          const r = pixels[idx], g = pixels[idx + 1], b = pixels[idx + 2];
+          // Check if pixel is "dark" (not background)
+          if (!isSameColor(r, g, b, bgColor)) {
+            firstDarkRow = y;
+            firstDarkCol = x;
+            break outer;
+          }
+        }
+      }
+
+      if (firstDarkRow < 0) return null;
+
+      // Find module size: scan right from first dark pixel to find first light pixel
+      let moduleEnd = firstDarkCol;
+      while (moduleEnd < width - 1) {
+        const nextCol = moduleEnd + 1;
+        const idx = (firstDarkRow * width + nextCol) * 4;
+        const r = pixels[idx], g = pixels[idx + 1], b = pixels[idx + 2];
+        if (isSameColor(r, g, b, bgColor)) break;
+        moduleEnd++;
+      }
+      moduleSize = moduleEnd - firstDarkCol + 1;
+      if (moduleSize < 1) moduleSize = 1;
+
+      // Calculate QR grid dimensions
+      const quietZone = firstDarkCol; // assume quiet zone is symmetric
+      let lastDarkRow = height - 1;
+      let lastDarkCol = width - 1;
+      for (let y = height - 1; y >= 0; y--) {
+        let found = false;
+        for (let x = 0; x < width; x++) {
+          const idx = (y * width + x) * 4;
+          const r = pixels[idx], g = pixels[idx + 1], b = pixels[idx + 2];
+          if (!isSameColor(r, g, b, bgColor)) { found = true; break; }
+        }
+        if (found) { lastDarkRow = y; break; }
+      }
+      for (let x = width - 1; x >= 0; x--) {
+        let found = false;
+        for (let y = 0; y < height; y++) {
+          const idx = (y * width + x) * 4;
+          const r = pixels[idx], g = pixels[idx + 1], b = pixels[idx + 2];
+          if (!isSameColor(r, g, b, bgColor)) { found = true; break; }
+        }
+        if (found) { lastDarkCol = x; break; }
+      }
+
+      const modulesX = Math.round((lastDarkCol - firstDarkCol + 1) / moduleSize);
+      const modulesY = Math.round((lastDarkRow - firstDarkRow + 1) / moduleSize);
+
+      // Build SVG
+      const padding = 4; // SVG quiet zone in modules
+      const totalModulesX = modulesX + padding * 2;
+      const totalModulesY = modulesY + padding * 2;
+      const svgSize = totalModulesX; // use X for square
+
+      let svgRects = '';
+
+      // Sample center of each module
+      for (let my = 0; my < modulesY; my++) {
+        for (let mx = 0; mx < modulesX; mx++) {
+          const px = firstDarkCol + mx * moduleSize + Math.floor(moduleSize / 2);
+          const py = firstDarkRow + my * moduleSize + Math.floor(moduleSize / 2);
+          if (px >= width || py >= height) continue;
+
+          const idx = (py * width + px) * 4;
+          const r = pixels[idx], g = pixels[idx + 1], b = pixels[idx + 2];
+
+          if (!isSameColor(r, g, b, bgColor)) {
+            const sx = (mx + padding) * 10;
+            const sy = (my + padding) * 10;
+            svgRects += `<rect x="${sx}" y="${sy}" width="10" height="10" fill="${fgColor}"/>`;
+          }
+        }
+      }
+
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgSize * 10} ${svgSize * 10}" width="${svgSize * 10}" height="${svgSize * 10}">
+  <rect width="${svgSize * 10}" height="${svgSize * 10}" fill="${bgColor}"/>
+  ${svgRects}
+</svg>`;
+    }
+
+    function isSameColor(r, g, b, hex) {
+      const br = parseInt(hex.slice(1, 3), 16);
+      const bg = parseInt(hex.slice(3, 5), 16);
+      const bb = parseInt(hex.slice(5, 7), 16);
+      const tolerance = 20;
+      return Math.abs(r - br) <= tolerance &&
+             Math.abs(g - bg) <= tolerance &&
+             Math.abs(b - bb) <= tolerance;
+    }
+
+    // Download SVG
+    function downloadSVG() {
+      const svgStr = generateSVGString();
+      if (!svgStr) {
+        showToast('SVG 생성에 실패했습니다.');
+        return;
+      }
+      const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = `qrcode-${Date.now()}.svg`;
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
+      showToast('SVG 파일이 다운로드됩니다!');
+    }
+
+    // Copy to clipboard as PNG
+    async function copyToClipboardPNG() {
+      const container = document.getElementById('qrCodeDisplay');
+      if (!container) {
+        showToast('QR 코드를 먼저 생성해주세요.');
+        return;
+      }
+
+      try {
+        const canvas = container.querySelector('canvas');
+        const img = container.querySelector('img');
+
+        let blob;
+        if (canvas) {
+          blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        } else if (img) {
+          const cvs = document.createElement('canvas');
+          cvs.width = img.naturalWidth || state.size;
+          cvs.height = img.naturalHeight || state.size;
+          const ctx = cvs.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          blob = await new Promise(resolve => cvs.toBlob(resolve, 'image/png'));
+        }
+
+        if (blob) {
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': blob })
+          ]);
+          showToast('QR 코드가 클립보드에 복사되었습니다!');
+        } else {
+          showToast('클립보드 복사에 실패했습니다.');
+        }
+      } catch (e) {
+        // Fallback for browsers that don't support ClipboardItem
+        showToast('이 브라우저는 이미지 클립보드 복사를 지원하지 않습니다.');
+      }
+    }
+
+    // ---- INIT ----
+    document.addEventListener('DOMContentLoaded', () => {
+      render();
+    });
+  </script>
+
+  <!-- Dark mode page-specific overrides -->
+  <style id="nfDarkOverrides"></style>
+</body>
+</html>

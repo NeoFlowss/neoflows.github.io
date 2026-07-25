@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>네오플로우 무료 툴 모음 - 광고 없는 유용한 도구</title>
+  <meta name="description" content="광고 없는 100% 무료 온라인 유틸리티 툴 모음. 룰렛, 비밀번호 생성기, QR코드, 타이머 등 10개+ 도구를 바로 사용하세요.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    .hero-bg {
+      background: linear-gradient(135deg, #1e1b4b 0%, #020617 40%, #4a044e 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    .hero-orb-1 { position:absolute;top:-5rem;left:-5rem;width:20rem;height:20rem;background:rgba(139,92,246,0.15);border-radius:50%;filter:blur(80px);animation:pulse 4s infinite; }
+    .hero-orb-2 { position:absolute;bottom:-5rem;right:-5rem;width:24rem;height:24rem;background:rgba(217,70,239,0.12);border-radius:50%;filter:blur(80px);animation:pulse 4s infinite 1s; }
+    .hero-orb-3 { position:absolute;top:33%;right:25%;width:16rem;height:16rem;background:rgba(56,189,248,0.08);border-radius:50%;filter:blur(60px);animation:pulse 4s infinite 2s; }
+
+    .gradient-text {
+      background: linear-gradient(to right, #ffffff, #ddd6fe, #f0abfc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .tool-card { opacity:0; transform: translateY(24px) scale(0.95); transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
+    .tool-card.visible { opacity:1; transform: translateY(0) scale(1); }
+    .tool-card:hover { transform: translateY(-4px) scale(1); }
+    .tool-card.visible:hover { transform: translateY(-4px) scale(1); }
+
+    .category-btn { padding:0.375rem 1rem; border-radius:9999px; font-size:0.75rem; font-weight:700; border:1px solid #e2e8f0; background:white; color:#475569; cursor:pointer; transition:all 0.15s; }
+    .category-btn:hover { border-color:#c4b5fd; color:#7c3aed; }
+    .category-btn.active { background:#7c3aed; color:white; border-color:#7c3aed; box-shadow:0 4px 14px rgba(124,58,237,0.3); }
+
+    .ping-dot { position:relative; display:flex; width:0.5rem; height:0.5rem; }
+    .ping-dot::before { content:''; position:absolute; inset:0; border-radius:50%; background:#34d399; opacity:0.75; animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite; }
+    .ping-dot::after { content:''; position:relative; width:0.5rem; height:0.5rem; border-radius:50%; background:#34d399; }
+    @keyframes ping { 75%,100% { transform:scale(2.5); opacity:0; } }
+
+    .search-box { position:relative; }
+    .search-box svg { position:absolute; left:0.875rem; top:50%; transform:translateY(-50%); width:1rem; height:1rem; color:#94a3b8; pointer-events:none; }
+    .search-box input { padding-left:2.75rem; padding-right:2.75rem; }
+    .search-clear { position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; padding:0.25rem; display:none; }
+    .search-clear.show { display:flex; }
+
+    .feedback-form select, .feedback-form input, .feedback-form textarea {
+      width:100%; padding:0.75rem 1rem; border:1px solid #e2e8f0; border-radius:0.75rem; font-size:0.875rem; font-family:inherit; background:white; color:#1e293b; outline:none; transition:all 0.15s;
+    }
+    .feedback-form select:focus, .feedback-form input:focus, .feedback-form textarea:focus {
+      border-color:#8b5cf6; box-shadow:0 0 0 3px rgba(139,92,246,0.15);
+    }
+    body.dark .feedback-form select, body.dark .feedback-form input, body.dark .feedback-form textarea {
+      background:#0f172a; border-color:#1e293b; color:#e2e8f0;
+    }
+    body.dark .category-btn { background:#0f172a; border-color:#1e293b; color:#94a3b8; }
+    body.dark .category-btn:hover { border-color:#7c3aed; color:#a78bfa; }
+    body.dark .category-btn.active { background:#7c3aed; color:white; border-color:#7c3aed; }
+
+    .click-badge {
+      position:absolute; top:0.75rem; right:0.75rem;
+      font-size:0.625rem; font-weight:700;
+      padding:0.125rem 0.5rem; border-radius:9999px;
+      background:rgba(0,0,0,0.05); color:#94a3b8;
+    }
+    body.dark .click-badge { background:rgba(255,255,255,0.05); color:#64748b; }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="nf-header">
+    <div class="nf-container" style="display:flex;align-items:center;justify-content:space-between;padding-top:0.875rem;padding-bottom:0.875rem;">
+      <div style="display:flex;align-items:center;gap:0.625rem;cursor:default;">
+        <div style="background:linear-gradient(135deg,#7c3aed,#d946ef);color:white;padding:0.625rem;border-radius:0.75rem;box-shadow:0 4px 14px rgba(124,58,237,0.3);">
+          <svg style="width:1.25rem;height:1.25rem" class="sm-hide" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <svg style="width:1.5rem;height:1.5rem" class="sm-show" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <span style="font-size:1.125rem;font-weight:900;color:#0f172a;letter-spacing:-0.025em;" class="sm-hide">Neoflows</span>
+            <span style="font-size:1.25rem;font-weight:900;color:#0f172a;letter-spacing:-0.025em;" class="sm-show">Neoflows</span>
+            <span style="font-size:0.625rem;font-weight:700;background:#ede9fe;color:#7c3aed;border:1px solid #ddd6fe;padding:0.125rem 0.5rem;border-radius:9999px;white-space:nowrap;">FREE TOOLS</span>
+          </div>
+          <p style="font-size:0.6875rem;color:#64748b;font-weight:500;">네오플로우 무료 툴 모음</p>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <button onclick="toggleDark()" id="darkToggleBtn" class="nf-btn nf-btn-ghost" style="padding:0.625rem;border-radius:0.75rem;" aria-label="다크모드 토글">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+        <button onclick="document.getElementById('feedbackSection').scrollIntoView({behavior:'smooth'})" class="nf-btn nf-btn-primary sm-hide">
+          <svg style="width:1rem;height:1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+          <span>툴 개발 요청하기</span>
+        </button>
+        <button onclick="document.getElementById('feedbackSection').scrollIntoView({behavior:'smooth'})" class="nf-btn nf-btn-primary sm-show">
+          <svg style="width:1rem;height:1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+          <span>요청</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero-bg" style="padding:3.5rem 1rem;text-align:center;color:white;">
+    <div class="hero-orb-1"></div>
+    <div class="hero-orb-2"></div>
+    <div class="hero-orb-3"></div>
+    <div style="max-width:56rem;margin:0 auto;position:relative;z-index:10;">
+      <div class="animate-float" style="display:inline-flex;align-items:center;gap:0.5rem;background:rgba(255,255,255,0.08);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.15);padding:0.375rem 1rem;border-radius:9999px;font-size:0.75rem;font-weight:700;color:#c4b5fd;margin-bottom:1.25rem;">
+        <div class="ping-dot"></div>
+        <span>광고 0% · 100% 무료 유틸리티 웹 서비스</span>
+      </div>
+      <h1 class="gradient-text" style="font-size:clamp(1.875rem,5vw,3.75rem);font-weight:900;line-height:1.1;letter-spacing:-0.025em;margin-bottom:1rem;">네오플로우 무료 툴 모음</h1>
+      <p style="font-size:clamp(0.875rem,2vw,1.125rem);color:#cbd5e1;font-weight:500;max-width:42rem;margin:0 auto 2rem;line-height:1.625;">광고 없습니다. 의견 남겨주시면 바로바로 툴 개발합니다!</p>
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:0.75rem;font-size:0.875rem;color:#cbd5e1;">
+        <div style="display:flex;align-items:center;gap:0.375rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);padding:0.5rem 0.875rem;border-radius:0.75rem;backdrop-filter:blur(4px);">
+          <svg style="width:1rem;height:1rem;color:#34d399" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          <span>회원가입 없음</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.375rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);padding:0.5rem 0.875rem;border-radius:0.75rem;backdrop-filter:blur(4px);">
+          <svg style="width:1rem;height:1rem;color:#34d399" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          <span>광고 없는 깔끔함</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.375rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);padding:0.5rem 0.875rem;border-radius:0.75rem;backdrop-filter:blur(4px);">
+          <svg style="width:1rem;height:1rem;color:#34d399" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          <span>사용자 피드백 빠른 반영</span>
+        </div>
+      </div>
+      <!-- Stats -->
+      <div style="margin-top:2.5rem;display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;max-width:28rem;margin-left:auto;margin-right:auto;">
+        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:1rem;padding:0.75rem 1rem;backdrop-filter:blur(4px);">
+          <div style="display:flex;justify-content:center;margin-bottom:0.25rem;color:#c4b5fd;"><svg style="width:1.25rem;height:1.25rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
+          <div id="statTools" style="font-size:1.5rem;font-weight:900;color:white;">10</div>
+          <div style="font-size:0.6875rem;color:#64748b;font-weight:500;">무료 툴</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:1rem;padding:0.75rem 1rem;backdrop-filter:blur(4px);">
+          <div style="display:flex;justify-content:center;margin-bottom:0.25rem;color:#c4b5fd;"><svg style="width:1.25rem;height:1.25rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg></div>
+          <div id="statClicks" style="font-size:1.5rem;font-weight:900;color:white;">0</div>
+          <div style="font-size:0.6875rem;color:#64748b;font-weight:500;">클릭 수</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:1rem;padding:0.75rem 1rem;backdrop-filter:blur(4px);">
+          <div style="display:flex;justify-content:center;margin-bottom:0.25rem;color:#c4b5fd;"><svg style="width:1.25rem;height:1.25rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></div>
+          <div id="statFeedbacks" style="font-size:1.5rem;font-weight:900;color:white;">2</div>
+          <div style="font-size:0.6875rem;color:#64748b;font-weight:500;">피드백</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOOLS SECTION -->
+  <main style="max-width:72rem;margin:0 auto;padding:2rem 1rem 3rem;">
+    <section>
+      <div style="margin-bottom:1.5rem;">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.75rem;margin-bottom:1rem;">
+          <div>
+            <h2 style="font-size:1.25rem;font-weight:900;color:#0f172a;display:flex;align-items:center;gap:0.5rem;">
+              🛠️ 사용 가능한 무료 툴 모음
+            </h2>
+            <p style="font-size:0.8125rem;color:#64748b;margin-top:0.25rem;">모든 도구는 새 창 페이지로 바로 연결되어 전용 화면에서 이용할 수 있습니다.</p>
+          </div>
+          <span style="font-size:0.75rem;font-weight:800;background:#ede9fe;color:#6d28d9;padding:0.25rem 0.875rem;border-radius:9999px;white-space:nowrap;">총 10개 툴 제공 및 확장 중</span>
+        </div>
+
+        <!-- Search -->
+        <div class="search-box" style="margin-bottom:0.75rem;">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" id="searchInput" class="nf-input" placeholder="툴 검색... (예: 룰렛, 비밀번호, QR)" oninput="filterTools()">
+          <button class="search-clear" id="searchClear" onclick="clearSearch()">
+            <svg style="width:1rem;height:1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <!-- Categories -->
+        <div id="categoryBar" style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+          <button class="category-btn active" onclick="setCategory('전체',this)">전체</button>
+          <button class="category-btn" onclick="setCategory('랜덤',this)">랜덤 (3)</button>
+          <button class="category-btn" onclick="setCategory('유틸리티',this)">유틸리티 (4)</button>
+          <button class="category-btn" onclick="setCategory('계산기',this)">계산기 (2)</button>
+          <button class="category-btn" onclick="setCategory('개발자',this)">개발자 (1)</button>
+        </div>
+      </div>
+
+      <!-- Tool Cards Grid -->
+      <div id="toolsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.25rem;">
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" style="display:none;text-align:center;padding:5rem 1rem;">
+        <svg style="width:3rem;height:3rem;color:#cbd5e1;margin:0 auto 0.75rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <p style="color:#64748b;font-weight:500;">검색 결과가 없습니다.</p>
+      </div>
+    </section>
+
+    <!-- FEEDBACK SECTION -->
+    <section id="feedbackSection" style="margin-top:3rem;">
+      <div style="display:grid;grid-template-columns:1fr;gap:1.5rem;">
+        <!-- Feedback Form -->
+        <div class="nf-card">
+          <h2 style="font-size:1.25rem;font-weight:900;color:#0f172a;margin-bottom:0.25rem;display:flex;align-items:center;gap:0.5rem;">
+            <svg style="width:1.25rem;height:1.25rem;color:#7c3aed" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            툴 개발 요청 & 의견
+          </h2>
+          <p style="font-size:0.8125rem;color:#64748b;margin-bottom:1rem;">원하는 툴이나 개선 의견을 남겨주세요! 빠르게 검토합니다.</p>
+          <form class="feedback-form" onsubmit="submitFeedback(event)">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
+              <select id="fbCategory">
+                <option value="새로운 툴 개발 요청">새로운 툴 개발 요청</option>
+                <option value="기능 개선">기능 개선</option>
+                <option value="버그 신고">버그 신고</option>
+                <option value="기타 의견">기타 의견</option>
+              </select>
+              <input type="text" id="fbAuthor" placeholder="닉네임 (선택사항)">
+            </div>
+            <textarea id="fbContent" placeholder="의견을 입력해주세요..." rows="3" style="min-height:80px;" required></textarea>
+            <div style="margin-top:0.75rem;text-align:right;">
+              <button type="submit" class="nf-btn nf-btn-primary">
+                <svg style="width:1rem;height:1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                <span>의견 접수하기</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Feedback List -->
+        <div class="nf-card">
+          <h3 style="font-size:1rem;font-weight:800;color:#0f172a;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;">
+            <svg style="width:1.125rem;height:1.125rem;color:#7c3aed" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+            최근 의견
+          </h3>
+          <div id="feedbackList" style="max-height:24rem;overflow-y:auto;display:flex;flex-direction:column;gap:0.75rem;"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="nf-footer" style="padding:1.5rem 1rem;text-align:center;">
+    <div class="nf-container">
+      <p style="font-size:0.75rem;color:#94a3b8;font-weight:500;">© 2025 Neoflows. 모든 도구는 100% 무료이며 광고가 없습니다.</p>
+    </div>
+  </footer>
+
+  <!-- Back to Top -->
+  <button id="nfTopBtn" class="nf-top-btn" aria-label="맨 위로">
+    <svg style="width:1.125rem;height:1.125rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+  </button>
+
+  <script src="js/common.js"></script>
+  <script>
+    /* ===== Tool Data ===== */
+    const tools = [
+      {
+        id: 'roulette', title: '스마트 커스텀 룰렛',
+        description: '원하는 항목을 자유롭게 편집하고 돌려보세요! 2줄 멀티라인 지원, IP 기반 당첨 기록 조회.',
+        tags: ['#커스텀룰렛', '#점심메뉴', '#추첨기'], category: '랜덤',
+        icon: '<svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>',
+        url: 'roulette.html', buttonText: '룰렛 시작하기',
+        color: '#7c3aed', bgLight: '#f5f3ff', bgDark: 'rgba(124,58,237,0.08)', borderColor: '#c4b5fd'
+      },
+      {
+        id: 'number-picker', title: '숫자 뽑기 (랜덤 번호 추첨)',
+        description: '원하는 범위를 설정하여 행운의 숫자, 로또 번호, 이벤트 당첨자 번호를 무작위로 추출합니다.',
+        tags: ['#숫자추첨', '#랜덤생성', '#이벤트'], category: '랜덤',
+        icon: '<svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>',
+        url: 'number-picker.html', buttonText: '숫자뽑기 시작',
+        color: '#f59e0b', bgLight: '#fffbeb', bgDark: 'rgba(245,158,11,0.08)', borderColor: '#fcd34d'
+      },
+      {
+        id: 'seat-picker', title: '자리 랜덤 뽑기',
+        description: '학교 교실, 회의실, 모임의 자리를 공정하게 랜덤으로 배치하고 한눈에 조망합니다.',
+        tags: ['#자리배치', '#교실자리', '#랜덤섞기'], category: '랜덤',
+        icon: '<svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>',
+        url: 'seat-picker.html', buttonText: '자리배치 시작',
+        color: '#0284c7', bgLight: '#f0f9ff', bgDark: 'rgba(2,132,199,0.08)', borderColor: '#7dd3fc'
+      },
+      {
+        id: 'password-generator', title: '비밀번호 생성기',
+        description: '해킹 위험 없는 강력한 무작위 보안 암호를 클릭 한번으로 손쉽게 생성합니다.',
+        tags: ['#비밀번호', '#보안', '#암호생성'], category: '유틸리티',
+        icon: '<svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>',
+        url: 'password-generator.html', buttonText: '비밀번호 생성',
+        color: '#059669', bgLight: '#ecfdf5', bgDark: 'rgba(5,150,105,0.08)', borderColor: '#6ee7b7'
+      },
+      {
+        id: 'notepad', title: '빠른 웹 메모장',
+        description: '급한 아이디어나 메모를 빠르게 기록하세요. 창을 닫아도 내 브라우저에 안전하게 자동 저장됩니다.',
+        tags: ['#메모장', '#빠른기록', '#자동저장'], category: '유틸리티',
+        icon: '<svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>',
+        url: 'notepad.html', buttonText: '메모장 열기',
+        color: '#9333ea', bgLight: '#faf5ff', bgDark: 'rgba(147,51,234,0.08)', borderColor: '#d8b4fe'
+      },
+      {
+        id: 'dday-calculator', title: 'D-Day & 날짜 계산기',
+        description: '중요한 일정, 시험, 연애 기념일 D-day 및 날짜 간격을 빠르고 정확하게 계산합니다.',
+        tags: ['#D-Day', '#날짜계산', '#기념일'], category: '계산기',
+        icon: '<svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>',
+        url: 'dday-calculator.html', buttonText: 'D-Day 계산',
+        color: '#e11d48', bgLight: '#fff1f2', bgDark: 'rgba(225,29,72,0.08)', borderColor: '#fda4af'
+      },
+      {
+        id: 'character-counter', title: '글자수 세기 (공백 포함/제외)',
+        description: '자소서 및 레포트 작성 시 공백 포함/제외 글자 수, 원고지 분량, 바이트(Byte) 수를 실시간 계산합니다.',
+        tags: ['#글자수세기', '#원고지', '#바이트수'], category: '계산기',
+        icon: '<svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/></svg>',
+        url: 'character-counter.html', buttonText: '글자수 세기',
+        color: '#0891b2', bgLight: '#ecfeff', bgDark: 'rgba(8,145,178,0.08)', borderColor: '#67e8f9'
+      },
+      {
+        id: 'qr-generator', title: '무료 QR 코드 생성기',
+        description: '원하는 웹사이트 주소나 텍스트를 고화질 QR 코드로 제작하여 다운로드합니다.',
+        tags: ['#QR코드', '#생성기', '#다운로드'], category: '유틸리티',
+        icon: '<svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>',
+        url: 'qr-generator.html', buttonText: 'QR 생성하기',
+        color: '#0d9488', bgLight: '#f0fdfa', bgDark: 'rgba(13,148,136,0.08)', borderColor: '#5eead4'
+      },
+      {
+        id: 'timer', title: '스톱워치 & 뽀모도로 타이머',
+        description: '공부 집중을 위한 뽀모도로 타이머 및 랩타임 측정이 가능한 깔끔한 스톱워치.',
+        tags: ['#스톱워치', '#뽀모도로', '#집중'], category: '유틸리티',
+        icon: '<svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        url: 'timer.html', buttonText: '타이머 시작',
+        color: '#ea580c', bgLight: '#fff7ed', bgDark: 'rgba(234,88,12,0.08)', borderColor: '#fdba74'
+      },
+      {
+        id: 'color-palette', title: 'CSS 그라디언트 생성기',
+        description: '디자이너와 개발자를 위한 아름다운 배경 색상 그라디언트 조합 생성 및 코드 복사.',
+        tags: ['#그라디언트', '#CSS', '#색상조합'], category: '개발자',
+        icon: '<svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>',
+        url: 'color-palette.html', buttonText: '그라디언트 만들기',
+        color: '#db2777', bgLight: '#fdf2f8', bgDark: 'rgba(219,39,119,0.08)', borderColor: '#f9a8d4'
+      }
+    ];
+
+    let activeCategory = '전체';
+    let clicks = JSON.parse(localStorage.getItem('nf_clicks') || '{}');
+    const INITIAL_FEEDBACKS = [
+      { id: 'init-1', category: '새로운 툴 개발 요청', author: '루렛러버', content: '스마트 커스텀 룰렛 항목을 더 늘릴 수 있으면 좋겠어요!', date: '2025. 07. 24' },
+      { id: 'init-2', category: '기능 개선', author: '개발자A', content: '광고 없어서 너무 깔끔하고 좋네요. 응원합니다!', date: '2025. 07. 23' }
+    ];
+    let feedbacks = JSON.parse(localStorage.getItem('nf_feedbacks') || 'null') || INITIAL_FEEDBACKS;
+
+    /* ===== Render Tools ===== */
+    function renderTools(list) {
+      const grid = document.getElementById('toolsGrid');
+      const empty = document.getElementById('emptyState');
+      if (list.length === 0) {
+        grid.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      grid.innerHTML = list.map((t, i) => {
+        const count = clicks[t.id] || 0;
+        return `
+        <div class="tool-card nf-card nf-card-hover" style="opacity:0;transition-delay:${i * 0.06}s;position:relative;"
+             onclick="openTool('${t.url}','${t.id}')"
+             onmouseenter="this.style.borderColor='${t.borderColor}'" onmouseleave="this.style.borderColor=''">
+          ${count > 0 ? `<div class="click-badge">${count}회</div>` : ''}
+          <div style="display:flex;align-items:start;gap:1rem;margin-bottom:1rem;">
+            <div style="background:${t.bgLight};color:${t.color};padding:0.75rem;border-radius:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+              ${t.icon}
+            </div>
+            <div style="flex:1;min-width:0;">
+              <h3 style="font-size:1rem;font-weight:800;color:#0f172a;line-height:1.4;margin-bottom:0.25rem;">${t.title}</h3>
+              <p style="font-size:0.8125rem;color:#64748b;line-height:1.5;">${t.description}</p>
+            </div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:0.375rem;margin-bottom:1rem;">
+            ${t.tags.map(tag => `<span class="nf-badge" style="background:${t.bgLight};color:${t.color};border-color:${t.borderColor};font-size:0.6875rem;">${tag}</span>`).join('')}
+          </div>
+          <button class="nf-btn" style="width:100%;background:${t.color};color:white;" 
+                  onmouseenter="this.style.opacity='0.9'" onmouseleave="this.style.opacity='1'">
+            <svg style="width:1rem;height:1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            ${t.buttonText}
+          </button>
+        </div>`;
+      }).join('');
+
+      // Animate cards in
+      requestAnimationFrame(() => {
+        grid.querySelectorAll('.tool-card').forEach((card, i) => {
+          setTimeout(() => card.classList.add('visible'), i * 60);
+        });
+      });
+    }
+
+    function openTool(url, id) {
+      clicks[id] = (clicks[id] || 0) + 1;
+      localStorage.setItem('nf_clicks', JSON.stringify(clicks));
+      updateStats();
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+
+    function filterTools() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const clearBtn = document.getElementById('searchClear');
+      clearBtn.classList.toggle('show', q.length > 0);
+      const filtered = tools.filter(t => {
+        const matchSearch = !q || t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q) || t.tags.some(tag => tag.includes(q));
+        const matchCat = activeCategory === '전체' || t.category === activeCategory;
+        return matchSearch && matchCat;
+      });
+      renderTools(filtered);
+    }
+
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      filterTools();
+    }
+
+    function setCategory(cat, btn) {
+      activeCategory = cat;
+      document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filterTools();
+    }
+
+    /* ===== Feedback ===== */
+    function renderFeedbacks() {
+      const list = document.getElementById('feedbackList');
+      if (feedbacks.length === 0) {
+        list.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:2rem;font-size:0.875rem;">아직 의견이 없습니다.</p>';
+        return;
+      }
+      list.innerHTML = feedbacks.map(fb => `
+        <div class="animate-fade-in" style="padding:0.875rem;border-radius:1rem;border:1px solid #f1f5f9;background:#f8fafc;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+              <span style="font-size:0.8125rem;font-weight:700;color:#0f172a;">${fb.author}</span>
+              <span style="font-size:0.6875rem;color:#94a3b8;">${fb.date}</span>
+            </div>
+            <span class="nf-badge" style="background:#f5f3ff;color:#7c3aed;border-color:#ddd6fe;font-size:0.625rem;">${fb.category}</span>
+          </div>
+          <p style="font-size:0.8125rem;color:#475569;line-height:1.5;">${fb.content}</p>
+        </div>
+      `).join('');
+    }
+
+    function submitFeedback(e) {
+      e.preventDefault();
+      const content = document.getElementById('fbContent').value.trim();
+      if (!content) return;
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}. ${String(now.getMonth()+1).padStart(2,'0')}. ${String(now.getDate()).padStart(2,'0')}`;
+      const fb = {
+        id: 'fb-' + Date.now(),
+        category: document.getElementById('fbCategory').value,
+        author: document.getElementById('fbAuthor').value.trim() || '익명',
+        content: content,
+        date: dateStr
+      };
+      feedbacks = [fb, ...feedbacks];
+      localStorage.setItem('nf_feedbacks', JSON.stringify(feedbacks));
+      document.getElementById('fbContent').value = '';
+      document.getElementById('fbAuthor').value = '';
+      renderFeedbacks();
+      updateStats();
+      showToast('의견이 성공적으로 접수되었습니다! 빠르게 검토하겠습니다.');
+    }
+
+    /* ===== Stats ===== */
+    function updateStats() {
+      const totalClicks = Object.values(clicks).reduce((a,b) => a + b, 0);
+      document.getElementById('statClicks').textContent = totalClicks;
+      document.getElementById('statFeedbacks').textContent = feedbacks.length;
+    }
+
+    /* ===== Dark mode style overrides ===== */
+    function applyDarkOverrides() {
+      const isDark = document.body.classList.contains('dark');
+      // Update hero gradient for dark (same, it's already dark)
+      // Update card colors
+      document.querySelectorAll('.tool-card .nf-badge').forEach(b => {
+        // badges already have inline styles from render, keep them
+      });
+      // Update text colors in cards
+      document.querySelectorAll('.tool-card h3').forEach(h => {
+        h.style.color = isDark ? '#f8fafc' : '#0f172a';
+      });
+      document.querySelectorAll('.tool-card p').forEach(p => {
+        p.style.color = isDark ? '#94a3b8' : '#64748b';
+      });
+      // Update section titles
+      document.querySelectorAll('h2').forEach(h => {
+        if (h.style.color) h.style.color = isDark ? '#f8fafc' : '#0f172a';
+      });
+      // Header logo
+      document.querySelectorAll('.nf-header span[style*="font-weight:900"]').forEach(s => {
+        s.style.color = isDark ? '#f8fafc' : '#0f172a';
+      });
+      // Search input
+      const si = document.getElementById('searchInput');
+      if (si) {
+        si.style.background = isDark ? '#0f172a' : 'white';
+        si.style.borderColor = isDark ? '#1e293b' : '#e2e8f0';
+        si.style.color = isDark ? '#e2e8f0' : '#1e293b';
+      }
+      // Feedback items
+      document.querySelectorAll('#feedbackList > div').forEach(d => {
+        d.style.background = isDark ? '#1e293b' : '#f8fafc';
+        d.style.borderColor = isDark ? '#334155' : '#f1f5f9';
+        d.querySelectorAll('span[style*="font-weight:700"]').forEach(s => {
+          s.style.color = isDark ? '#f8fafc' : '#0f172a';
+        });
+        d.querySelectorAll('p').forEach(p => {
+          p.style.color = isDark ? '#cbd5e1' : '#475569';
+        });
+      });
+      // Form elements
+      document.querySelectorAll('.feedback-form select, .feedback-form input, .feedback-form textarea').forEach(el => {
+        el.style.background = isDark ? '#0f172a' : 'white';
+        el.style.borderColor = isDark ? '#1e293b' : '#e2e8f0';
+        el.style.color = isDark ? '#e2e8f0' : '#1e293b';
+      });
+    }
+
+    // Observe dark class changes
+    const darkObs = new MutationObserver(() => {
+      updateDarkIcon(document.body.classList.contains('dark'));
+      applyDarkOverrides();
+    });
+
+    /* ===== Init ===== */
+    document.addEventListener('DOMContentLoaded', () => {
+      commonInit();
+      renderTools(tools);
+      renderFeedbacks();
+      updateStats();
+      applyDarkOverrides();
+      darkObs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    });
+  </script>
+
+  <!-- Responsive font-size helper -->
+  <style>
+    @media (min-width: 640px) {
+      .sm-hide { display: none !important; }
+    }
+    @media (max-width: 639px) {
+      .sm-show { display: flex !important; }
+    }
+    @media (min-width: 640px) {
+      .sm-show { display: none !important; }
+    }
+    @media (max-width: 639px) {
+      .sm-hide { display: flex !important; }
+    }
+  </style>
+</body>
+</html>

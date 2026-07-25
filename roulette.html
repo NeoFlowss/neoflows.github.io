@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스마트 커스텀 룰렛 | Neoflows Tools</title>
+  <meta name="description" content="원하는 항목을 자유롭게 편집하고 룰렛을 돌려보세요. 번호 뽑기, 점심 메뉴 선택 등 다양한 활용!">
+  <!-- Google Fonts (Noto Sans KR) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Shared Styles -->
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    /* ======================================== */
+    /*  Roulette Page - Specific Styles         */
+    /* ======================================== */
+
+    /* Result pulse animation */
+    @keyframes resultPop {
+      0% { transform: scale(0.8); opacity: 0; }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+    @keyframes confettiBurst {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-60px) scale(0.3); }
+    }
+    .result-pop {
+      animation: resultPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    .result-active {
+      animation: pulseGlow 0.8s ease-in-out infinite alternate;
+    }
+    .confetti-particle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: confettiBurst 0.8s ease-out forwards;
+      pointer-events: none;
+    }
+
+    /* Wheel outer ring glow */
+    .wheel-glow {
+      filter: drop-shadow(0 0 12px rgba(124, 58, 237, 0.15));
+    }
+
+    /* Spin button hover shimmer */
+    @keyframes btnShimmer {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+    .spin-btn-shimmer {
+      background: linear-gradient(135deg, #7c3aed, #a855f7, #c084fc, #a855f7, #7c3aed);
+      background-size: 200% 200%;
+    }
+    .spin-btn-shimmer:hover {
+      animation: btnShimmer 2s linear infinite;
+    }
+
+    /* History item hover */
+    .history-item {
+      transition: all 0.15s ease;
+    }
+    .history-item:hover {
+      background: #f1f5f9;
+    }
+
+    /* Item row in editor */
+    .item-row {
+      transition: all 0.2s ease;
+    }
+    .item-row:hover {
+      border-color: #c4b5fd !important;
+    }
+
+    /* Preset button active state */
+    .preset-btn {
+      transition: all 0.15s ease;
+    }
+    .preset-btn:hover {
+      background: #ede9fe !important;
+      color: #7c3aed !important;
+      border-color: #c4b5fd !important;
+    }
+    .preset-btn.active {
+      background: #7c3aed !important;
+      color: white !important;
+      border-color: #7c3aed !important;
+    }
+
+    /* Canvas container responsive */
+    .wheel-wrapper {
+      width: 100%;
+      max-width: 340px;
+      aspect-ratio: 1 / 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+    }
+    @media (min-width: 640px) {
+      .wheel-wrapper {
+        max-width: 400px;
+      }
+    }
+
+    /* Responsive grid */
+    .roulette-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    @media (min-width: 1024px) {
+      .roulette-grid {
+        grid-template-columns: 7fr 5fr;
+      }
+    }
+
+    /* Items editor scrollable */
+    .items-scroll {
+      max-height: 420px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    /* History scrollable */
+    .history-scroll {
+      max-height: 200px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    /* Color picker styling */
+    input[type="color"] {
+      -webkit-appearance: none;
+      appearance: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      border-radius: 0.5rem;
+    }
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 2px;
+    }
+    input[type="color"]::-webkit-color-swatch {
+      border: 2px solid #e2e8f0;
+      border-radius: 0.375rem;
+    }
+
+    /* Needle pointer shadow */
+    .needle-shadow {
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    }
+
+    /* Confetti container */
+    .confetti-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 5;
+    }
+  </style>
+
+  <!-- Dark mode overrides for roulette-specific elements -->
+  <style id="nfDarkOverrides"></style>
+</head>
+<body class="min-h-screen" style="display:flex;flex-direction:column;">
+
+  <!-- Shared Header -->
+  <div id="headerMount"></div>
+
+  <!-- Main Application -->
+  <main class="nf-container" style="flex:1;padding-top:1.5rem;padding-bottom:2rem;">
+    <div class="roulette-grid">
+
+      <!-- ======================================== -->
+      <!--  Left Column: Wheel + Controls + History -->
+      <!-- ======================================== -->
+      <section class="nf-card" style="display:flex;flex-direction:column;align-items:center;padding:1.75rem;">
+
+        <!-- Pointer / Needle at top -->
+        <div class="needle-shadow" style="position:relative;z-index:10;margin-bottom:-0.75rem;pointer-events:none;">
+          <svg width="32" height="40" viewBox="0 0 32 40" fill="none">
+            <defs>
+              <linearGradient id="needleGrad" x1="16" y1="0" x2="16" y2="40" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#ef4444"/>
+                <stop offset="100%" stop-color="#dc2626"/>
+              </linearGradient>
+              <filter id="needleShadow">
+                <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.25"/>
+              </filter>
+            </defs>
+            <path d="M16 38 L2 6 Q0 2 4 2 L28 2 Q32 2 30 6 Z" fill="url(#needleGrad)" filter="url(#needleShadow)" stroke="#b91c1c" stroke-width="1"/>
+            <circle cx="16" cy="8" r="4" fill="#fca5a5" opacity="0.6"/>
+          </svg>
+        </div>
+
+        <!-- Canvas Wheel Container -->
+        <div class="wheel-wrapper wheel-glow">
+          <canvas id="rouletteCanvas" style="width:100%;height:100%;border-radius:50%;"></canvas>
+          <!-- Center pin -->
+          <div style="position:absolute;width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#1e293b,#334155);border:4px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+            <div style="width:0.625rem;height:0.625rem;background:#7c3aed;border-radius:50%;"></div>
+          </div>
+          <!-- Confetti container for win effect -->
+          <div id="confettiContainer" class="confetti-container"></div>
+        </div>
+
+        <!-- Spin Button -->
+        <div style="margin-top:1.5rem;width:100%;max-width:18rem;">
+          <button
+            id="spinBtn"
+            onclick="spinWheel()"
+            class="spin-btn-shimmer"
+            style="width:100%;color:white;font-weight:900;font-size:1.125rem;padding:1rem 1.5rem;border-radius:1rem;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;box-shadow:0 6px 20px rgba(124,58,237,0.35);transition:all 0.15s ease;"
+          >
+            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            <span>룰렛 돌리기!</span>
+          </button>
+        </div>
+
+        <!-- Result Display Box -->
+        <div id="resultBox" style="margin-top:1.25rem;width:100%;max-width:22rem;padding:1.25rem;border-radius:1.25rem;background:#f8fafc;border:2px solid #e2e8f0;text-align:center;transition:all 0.3s ease;">
+          <p style="font-size:0.6875rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#94a3b8;margin-bottom:0.25rem;">당첨 결과</p>
+          <div id="resultText" style="font-size:1.375rem;font-weight:900;color:#1e293b;min-height:2rem;display:flex;align-items:center;justify-content:center;word-break:break-word;padding:0 0.5rem;line-height:1.4;">
+            돌리기 버튼을 눌러주세요!
+          </div>
+        </div>
+
+        <!-- Preset Quick Templates -->
+        <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid #e2e8f0;width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0.5rem;">
+          <span style="font-size:0.75rem;font-weight:700;color:#94a3b8;margin-right:0.25rem;">빠른 템플릿:</span>
+          <button onclick="loadPreset('default')" class="preset-btn active" id="presetDefault" style="font-size:0.75rem;background:#f1f5f9;color:#64748b;padding:0.375rem 0.75rem;border-radius:0.5rem;border:1px solid #e2e8f0;font-weight:600;cursor:pointer;">1~3 번호</button>
+          <button onclick="loadPreset('numbers6')" class="preset-btn" id="presetNumbers6" style="font-size:0.75rem;background:#f1f5f9;color:#64748b;padding:0.375rem 0.75rem;border-radius:0.5rem;border:1px solid #e2e8f0;font-weight:600;cursor:pointer;">1~6 번호</button>
+          <button onclick="loadPreset('food')" class="preset-btn" id="presetFood" style="font-size:0.75rem;background:#f1f5f9;color:#64748b;padding:0.375rem 0.75rem;border-radius:0.5rem;border:1px solid #e2e8f0;font-weight:600;cursor:pointer;">점심 메뉴</button>
+        </div>
+
+        <!-- Spin History Panel -->
+        <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid #e2e8f0;width:100%;max-width:22rem;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.625rem;padding:0 0.25rem;">
+            <h3 style="font-size:0.8125rem;font-weight:700;color:#334155;display:flex;align-items:center;gap:0.375rem;">
+              <svg width="16" height="16" fill="none" stroke="#7c3aed" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span>뽑힌 기록</span>
+              <span id="historyCount" style="font-size:0.6875rem;color:#94a3b8;">(0)</span>
+            </h3>
+            <button onclick="clearHistory()" style="font-size:0.6875rem;font-weight:600;color:#94a3b8;background:none;border:none;cursor:pointer;padding:0.25rem 0.5rem;border-radius:0.375rem;transition:all 0.15s ease;" onmouseover="this.style.color='#ef4444';this.style.background='#fef2f2'" onmouseout="this.style.color='#94a3b8';this.style.background='none'">
+              기록 삭제
+            </button>
+          </div>
+          <div id="historyList" class="history-scroll nf-text-muted" style="background:#f8fafc;padding:0.875rem;border-radius:1rem;border:1px solid #e2e8f0;">
+            <div style="color:#94a3b8;text-align:center;padding:0.75rem 0;font-size:0.6875rem;">아직 뽑힌 기록이 없습니다.</div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ======================================== -->
+      <!--  Right Column: Items Editor Panel        -->
+      <!-- ======================================== -->
+      <section class="nf-card" style="display:flex;flex-direction:column;padding:1.5rem;">
+
+        <!-- Editor Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:0.875rem;border-bottom:1px solid #f1f5f9;margin-bottom:1rem;">
+          <div>
+            <h2 class="nf-text-primary" style="font-size:1.0625rem;font-weight:800;">항목 편집</h2>
+            <p style="font-size:0.75rem;color:#94a3b8;font-weight:500;">내용은 2줄까지 작성할 수 있습니다</p>
+          </div>
+          <button
+            onclick="addItem()"
+            style="display:flex;align-items:center;gap:0.375rem;background:#ede9fe;color:#7c3aed;font-weight:700;padding:0.5rem 0.875rem;border-radius:0.75rem;border:none;font-size:0.8125rem;cursor:pointer;transition:all 0.15s ease;"
+            onmouseover="this.style.background='#ddd6fe'"
+            onmouseout="this.style.background='#ede9fe'"
+          >
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            <span>항목 추가</span>
+          </button>
+        </div>
+
+        <!-- Items List -->
+        <div id="itemsContainer" class="items-scroll" style="display:flex;flex-direction:column;gap:0.75rem;">
+          <!-- Dynamic items rendered via JS -->
+        </div>
+
+        <!-- Helper text -->
+        <p style="font-size:0.6875rem;color:#94a3b8;margin-top:1rem;text-align:center;">
+          * 최소 2개, 최대 12개까지 자유롭게 설정 가능합니다.
+        </p>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Shared Footer -->
+  <div id="footerMount"></div>
+
+  <!-- Shared JS -->
+  <script src="js/common.js"></script>
+
+  <script>
+    // ======================================== */
+    //  Roulette App - Vanilla JS               */
+    // ======================================== */
+
+    // --- Color Palette ---
+    const COLOR_PALETTE = [
+      '#FF6B6B', '#4ECDC4', '#FFE66D', '#1A535C', '#45B7D1',
+      '#96CEB4', '#FFEEAD', '#D4A5A5', '#9B59B6', '#3498DB',
+      '#E67E22', '#2ECC71'
+    ];
+
+    // --- Presets ---
+    const PRESETS = {
+      default: [
+        { text: '1', color: '#FF6B6B' },
+        { text: '2', color: '#4ECDC4' },
+        { text: '3', color: '#FFE66D' }
+      ],
+      numbers6: [
+        { text: '1번', color: '#FF6B6B' },
+        { text: '2번', color: '#4ECDC4' },
+        { text: '3번', color: '#FFE66D' },
+        { text: '4번', color: '#45B7D1' },
+        { text: '5번', color: '#96CEB4' },
+        { text: '6번', color: '#9B59B6' }
+      ],
+      food: [
+        { text: '짜장면\n짬뽕', color: '#FF6B6B' },
+        { text: '김치\n찌개', color: '#4ECDC4' },
+        { text: '수제\n돈까스', color: '#FFE66D' },
+        { text: '떡볶이\n튀김', color: '#45B7D1' },
+        { text: '싱싱\n초밥', color: '#96CEB4' }
+      ]
+    };
+
+    // --- App State ---
+    let items = JSON.parse(JSON.stringify(PRESETS.default));
+    let currentAngle = 0;
+    let isSpinning = false;
+    let activePreset = 'default';
+    let spinHistory = [];
+
+    // --- DOM Elements ---
+    const canvas = document.getElementById('rouletteCanvas');
+    const ctx = canvas.getContext('2d');
+    const itemsContainer = document.getElementById('itemsContainer');
+    const spinBtn = document.getElementById('spinBtn');
+    const resultBox = document.getElementById('resultBox');
+    const resultText = document.getElementById('resultText');
+    const historyList = document.getElementById('historyList');
+    const historyCount = document.getElementById('historyCount');
+    const confettiContainer = document.getElementById('confettiContainer');
+
+    // --- Load History from localStorage ---
+    function loadHistory() {
+      try {
+        const saved = localStorage.getItem('nf_roulette_history');
+        if (saved) spinHistory = JSON.parse(saved);
+      } catch (e) {
+        spinHistory = [];
+      }
+    }
+
+    function saveHistory() {
+      try {
+        localStorage.setItem('nf_roulette_history', JSON.stringify(spinHistory.slice(0, 50)));
+      } catch (e) { /* ignore */ }
+    }
+
+    // --- Canvas HiDPI Setup ---
+    function setupCanvas() {
+      const size = 600;
+      canvas.width = size;
+      canvas.height = size;
+      drawWheel();
+    }
+
+    // --- Draw Roulette Wheel ---
+    function drawWheel() {
+      const numSlices = items.length;
+      if (numSlices === 0) return;
+
+      const sliceAngle = (Math.PI * 2) / numSlices;
+      const radius = canvas.width / 2;
+      const cx = radius;
+      const cy = radius;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Outer ring
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.fillStyle = '#1e293b';
+      ctx.fill();
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = '#334155';
+      ctx.stroke();
+
+      // Draw slices
+      items.forEach((item, index) => {
+        const startAngle = currentAngle + index * sliceAngle;
+        const endAngle = startAngle + sliceAngle;
+
+        // Draw wedge
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, radius - 5, startAngle, endAngle);
+        ctx.closePath();
+        ctx.fillStyle = item.color;
+        ctx.fill();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        // Draw 2-line text
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(startAngle + sliceAngle / 2);
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.shadowBlur = 3;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
+
+        // Font sizing
+        const fontSize = Math.max(14, Math.min(26, 240 / numSlices));
+        ctx.font = `bold ${fontSize}px "Noto Sans KR", sans-serif`;
+
+        // Split text into lines
+        let lines = (item.text || '').split('\n');
+        if (lines.length > 2) lines = lines.slice(0, 2);
+
+        const lineHeight = fontSize * 1.15;
+        const totalHeight = (lines.length - 1) * lineHeight;
+
+        lines.forEach((lineText, lineIdx) => {
+          let text = lineText;
+          if (text.length > 8) text = text.substring(0, 7) + '..';
+          const yPos = (lineIdx * lineHeight) - (totalHeight / 2) + (fontSize / 3);
+          ctx.fillText(text, radius - 30, yPos);
+        });
+
+        ctx.restore();
+      });
+
+      // Inner decorative ring
+      ctx.beginPath();
+      ctx.arc(cx, cy, 22, 0, Math.PI * 2);
+      ctx.fillStyle = '#1e293b';
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#475569';
+      ctx.stroke();
+    }
+
+    // --- Render Items Editor List ---
+    function renderItemsList() {
+      itemsContainer.innerHTML = '';
+
+      items.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'item-row';
+        row.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.625rem;background:#f8fafc;border-radius:1rem;border:1px solid #e2e8f0;';
+
+        row.innerHTML = `
+          <input
+            type="color"
+            value="${item.color}"
+            onchange="updateItemColor(${index}, this.value)"
+            style="width:2rem;height:2rem;flex-shrink:0;border-radius:0.5rem;"
+            title="색상 변경"
+          />
+          <textarea
+            rows="2"
+            oninput="updateItemText(${index}, this.value)"
+            placeholder="내용 입력 (2줄 가능)"
+            style="flex:1;background:white;border:1px solid #e2e8f0;border-radius:0.625rem;padding:0.5rem;font-size:0.8125rem;font-weight:600;font-family:inherit;color:#1e293b;outline:none;resize:none;line-height:1.35;min-height:3rem;"
+            onfocus="this.style.borderColor='#8b5cf6';this.style.boxShadow='0 0 0 3px rgba(139,92,246,0.12)'"
+            onblur="this.style.borderColor='#e2e8f0';this.style.boxShadow='none'"
+          >${escapeHtml(item.text)}</textarea>
+          <button
+            onclick="deleteItem(${index})"
+            style="padding:0.375rem;color:#94a3b8;background:none;border:none;cursor:pointer;border-radius:0.5rem;flex-shrink:0;transition:all 0.15s ease;"
+            onmouseover="this.style.color='#ef4444';this.style.background='#fef2f2'"
+            onmouseout="this.style.color='#94a3b8';this.style.background='none'"
+            title="항목 삭제"
+          >
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+          </button>
+        `;
+
+        itemsContainer.appendChild(row);
+      });
+
+      drawWheel();
+    }
+
+    // --- Escape HTML ---
+    function escapeHtml(text) {
+      return (text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // --- Item CRUD ---
+    function updateItemText(index, newText) {
+      items[index].text = newText;
+      drawWheel();
+      clearActivePreset();
+    }
+
+    function updateItemColor(index, newColor) {
+      items[index].color = newColor;
+      drawWheel();
+      clearActivePreset();
+    }
+
+    function addItem() {
+      if (items.length >= 12) {
+        showToast('최대 12개 항목까지 추가 가능합니다.');
+        return;
+      }
+      const nextColor = COLOR_PALETTE[items.length % COLOR_PALETTE.length];
+      items.push({
+        text: `${items.length + 1}번`,
+        color: nextColor
+      });
+      renderItemsList();
+      itemsContainer.scrollTop = itemsContainer.scrollHeight;
+      clearActivePreset();
+    }
+
+    function deleteItem(index) {
+      if (items.length <= 2) {
+        showToast('최소 2개 이상의 항목이 필요합니다.');
+        return;
+      }
+      items.splice(index, 1);
+      renderItemsList();
+      clearActivePreset();
+    }
+
+    // --- Presets ---
+    function loadPreset(type) {
+      if (isSpinning) return;
+      items = JSON.parse(JSON.stringify(PRESETS[type]));
+      currentAngle = 0;
+      activePreset = type;
+      resetResultDisplay();
+      renderItemsList();
+      updatePresetButtons();
+      showToast(`"${type === 'default' ? '1~3 번호' : type === 'numbers6' ? '1~6 번호' : '점심 메뉴'}" 템플릿을 불러왔습니다.`);
+    }
+
+    function updatePresetButtons() {
+      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+      const map = { default: 'presetDefault', numbers6: 'presetNumbers6', food: 'presetFood' };
+      const el = document.getElementById(map[activePreset]);
+      if (el) el.classList.add('active');
+    }
+
+    function clearActivePreset() {
+      activePreset = null;
+      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+    }
+
+    // --- Spin ---
+    function spinWheel() {
+      if (isSpinning) return;
+      if (items.length < 2) {
+        showToast('항목을 2개 이상 등록해 주세요.');
+        return;
+      }
+
+      isSpinning = true;
+      spinBtn.disabled = true;
+      spinBtn.style.opacity = '0.6';
+      spinBtn.style.cursor = 'not-allowed';
+
+      // Reset result
+      resultBox.classList.remove('result-active', 'result-pop');
+      resultBox.style.background = '#f8fafc';
+      resultBox.style.borderColor = '#e2e8f0';
+      resultText.style.color = '#94a3b8';
+      resultText.innerText = '룰렛이 도는 중...';
+
+      // Random spin: 5-10 full rotations + random offset
+      const extraSpins = (Math.floor(Math.random() * 6) + 5) * (Math.PI * 2);
+      const randomOffset = Math.random() * (Math.PI * 2);
+      const totalTargetAngle = currentAngle + extraSpins + randomOffset;
+
+      const duration = 4500;
+      const startTime = performance.now();
+      const startAngle = currentAngle;
+
+      function animateSpin(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        // Ease out quartic
+        const easeOut = 1 - Math.pow(1 - progress, 4);
+        currentAngle = startAngle + (totalTargetAngle - startAngle) * easeOut;
+        drawWheel();
+
+        if (progress < 1) {
+          requestAnimationFrame(animateSpin);
+        } else {
+          isSpinning = false;
+          spinBtn.disabled = false;
+          spinBtn.style.opacity = '1';
+          spinBtn.style.cursor = 'pointer';
+          calculateWinner();
+        }
+      }
+
+      requestAnimationFrame(animateSpin);
+    }
+
+    // --- Calculate Winner ---
+    function calculateWinner() {
+      const numSlices = items.length;
+      const sliceAngle = (Math.PI * 2) / numSlices;
+
+      // Pointer is at the top (12 o'clock = -π/2 or 3π/2)
+      const normalizedAngle = ((currentAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+      const pointerAngle = ((Math.PI * 1.5) - normalizedAngle + Math.PI * 2) % (Math.PI * 2);
+      const winningIndex = Math.floor(pointerAngle / sliceAngle) % numSlices;
+
+      const winner = items[winningIndex];
+      const winnerName = winner.text || '빈 항목';
+
+      displayResult(winnerName, winner.color);
+      addHistoryRecord(winnerName, winner.color);
+      spawnConfetti(winner.color);
+    }
+
+    // --- Display Result ---
+    function displayResult(name, color) {
+      resultText.innerText = name.replace(/\n/g, ' ');
+      resultText.style.color = '#1e293b';
+      resultBox.style.background = '#f5f3ff';
+      resultBox.style.borderColor = color || '#7c3aed';
+      resultBox.classList.remove('result-active', 'result-pop');
+      void resultBox.offsetWidth; // trigger reflow
+      resultBox.classList.add('result-pop');
+      setTimeout(() => {
+        resultBox.classList.add('result-active');
+      }, 500);
+    }
+
+    function resetResultDisplay() {
+      resultBox.classList.remove('result-active', 'result-pop');
+      resultBox.style.background = '#f8fafc';
+      resultBox.style.borderColor = '#e2e8f0';
+      resultText.style.color = '#1e293b';
+      resultText.innerText = '돌리기 버튼을 눌러주세요!';
+    }
+
+    // --- Confetti Effect ---
+    function spawnConfetti(baseColor) {
+      confettiContainer.innerHTML = '';
+      const colors = [baseColor, '#7c3aed', '#fbbf24', '#f472b6', '#34d399', '#60a5fa'];
+      for (let i = 0; i < 18; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'confetti-particle';
+        const angle = (Math.PI * 2 * i) / 18;
+        const distance = 40 + Math.random() * 60;
+        const x = Math.cos(angle) * distance;
+        const y = Math.sin(angle) * distance;
+        particle.style.background = colors[i % colors.length];
+        particle.style.left = `${x}px`;
+        particle.style.top = `${y}px`;
+        particle.style.animationDuration = `${0.6 + Math.random() * 0.5}s`;
+        particle.style.width = `${6 + Math.random() * 6}px`;
+        particle.style.height = particle.style.width;
+        confettiContainer.appendChild(particle);
+      }
+      setTimeout(() => { confettiContainer.innerHTML = ''; }, 1200);
+    }
+
+    // --- History ---
+    function addHistoryRecord(resultName, color) {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      const h = String(now.getHours()).padStart(2, '0');
+      const min = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+
+      spinHistory.unshift({
+        date: `${y}.${m}.${d}`,
+        time: `${h}:${min}:${s}`,
+        text: resultName.replace(/\n/g, ' '),
+        color: color || '#7c3aed'
+      });
+
+      saveHistory();
+      renderHistoryList();
+    }
+
+    function renderHistoryList() {
+      historyCount.textContent = `(${spinHistory.length})`;
+
+      if (spinHistory.length === 0) {
+        historyList.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:0.75rem 0;font-size:0.6875rem;">아직 뽑힌 기록이 없습니다.</div>';
+        return;
+      }
+
+      historyList.innerHTML = spinHistory.map((item, idx) => `
+        <div class="history-item" style="display:flex;align-items:center;justify-content:space-between;background:white;padding:0.5rem 0.75rem;border-radius:0.75rem;border:1px solid #f1f5f9;margin-bottom:0.375rem;font-size:0.6875rem;${idx === 0 ? 'animation:slideIn 0.3s ease-out;' : ''}">
+          <div style="display:flex;align-items:center;gap:0.5rem;min-width:0;">
+            <div style="width:0.5rem;height:0.5rem;border-radius:50%;background:${item.color};flex-shrink:0;"></div>
+            <span style="color:#334155;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;">${escapeHtml(item.text)}</span>
+          </div>
+          <span style="color:#94a3b8;font-size:0.625rem;font-family:monospace;white-space:nowrap;margin-left:0.5rem;">${item.date} ${item.time}</span>
+        </div>
+      `).join('');
+    }
+
+    function clearHistory() {
+      if (spinHistory.length === 0) {
+        showToast('삭제할 기록이 없습니다.');
+        return;
+      }
+      spinHistory = [];
+      saveHistory();
+      renderHistoryList();
+      showToast('뽑힌 기록이 삭제되었습니다.');
+    }
+
+    // --- Dark Mode Overrides (augments common.js) ---
+    function updateRouletteDarkStyles() {
+      const style = document.getElementById('nfDarkOverrides');
+      if (!style) return;
+      const isDark = document.body.classList.contains('dark');
+      style.textContent = isDark ? `
+        /* Roulette-specific dark overrides */
+        .item-row { background: #1e293b !important; border-color: #334155 !important; }
+        .item-row:hover { border-color: #7c3aed !important; }
+        .item-row textarea { background: #0f172a !important; border-color: #334155 !important; color: #e2e8f0 !important; }
+        .item-row textarea:focus { border-color: #7c3aed !important; box-shadow: 0 0 0 3px rgba(124,58,237,0.15) !important; }
+        .item-row input[type="color"]::-webkit-color-swatch { border-color: #475569 !important; }
+        .wheel-glow { filter: drop-shadow(0 0 16px rgba(124, 58, 237, 0.25)); }
+        #resultBox { background: #1e293b !important; border-color: #334155 !important; }
+        #resultText { color: #e2e8f0 !important; }
+        .history-item { background: #1e293b !important; border-color: #334155 !important; }
+        .history-item:hover { background: #334155 !important; }
+        .history-item span { color: #e2e8f0 !important; }
+        .preset-btn { background: #1e293b !important; color: #94a3b8 !important; border-color: #334155 !important; }
+        .preset-btn:hover { background: #334155 !important; color: #c4b5fd !important; border-color: #7c3aed !important; }
+        .preset-btn.active { background: #7c3aed !important; color: white !important; border-color: #7c3aed !important; }
+        #historyList { background: #1e293b !important; border-color: #334155 !important; }
+        /* Result active dark */
+        .result-active { background: rgba(124, 58, 237, 0.1) !important; }
+      ` : '';
+    }
+
+    // Observe dark mode changes for roulette-specific overrides
+    const rouletteDarkObserver = new MutationObserver(() => updateRouletteDarkStyles());
+
+    // --- Initialize ---
+    function init() {
+      // Mount shared header and footer
+      document.getElementById('headerMount').innerHTML = toolHeaderHTML('스마트 커스텀 룰렛', '원하는 항목을 자유롭게 편집하고 돌려보세요!');
+      document.getElementById('footerMount').innerHTML = toolFooterHTML();
+
+      // Setup roulette
+      loadHistory();
+      setupCanvas();
+      renderItemsList();
+      renderHistoryList();
+      updatePresetButtons();
+
+      // Dark mode
+      rouletteDarkObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+      updateRouletteDarkStyles();
+
+      // Spin button active press effect
+      spinBtn.addEventListener('mousedown', () => {
+        if (!spinBtn.disabled) spinBtn.style.transform = 'scale(0.97)';
+      });
+      spinBtn.addEventListener('mouseup', () => {
+        spinBtn.style.transform = 'scale(1)';
+      });
+      spinBtn.addEventListener('mouseleave', () => {
+        spinBtn.style.transform = 'scale(1)';
+      });
+    }
+
+    // Wait for DOM + fonts
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>

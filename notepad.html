@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>빠른 웹 메모장 - Neoflows Tools</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    /* ====== Page Layout ====== */
+    .nf-tool-body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .nf-tool-main {
+      flex: 1;
+      padding: 1.5rem 1rem 3rem;
+    }
+    .nf-container-tool {
+      max-width: 56rem;
+      margin: 0 auto;
+    }
+
+    /* ====== Tab Bar ====== */
+    .memo-tab-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      overflow-x: auto;
+      padding: 0.25rem 0;
+      margin-bottom: 1rem;
+      scrollbar-width: none;
+    }
+    .memo-tab-bar::-webkit-scrollbar { display: none; }
+    .memo-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.5rem 0.875rem;
+      border-radius: 0.625rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid #e2e8f0;
+      background: white;
+      color: #475569;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      max-width: 10rem;
+      flex-shrink: 0;
+    }
+    .memo-tab:hover { border-color: #c4b5fd; background: #faf5ff; }
+    .memo-tab.active {
+      background: linear-gradient(135deg, #9333ea, #a855f7);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 2px 8px rgba(147,51,234,0.3);
+    }
+    .memo-tab-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 6rem;
+    }
+    .memo-tab-close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.125rem;
+      height: 1.125rem;
+      border-radius: 50%;
+      flex-shrink: 0;
+      opacity: 0.5;
+      transition: all 0.15s;
+    }
+    .memo-tab-close:hover { opacity: 1; background: rgba(255,255,255,0.3); }
+    .memo-tab:not(.active) .memo-tab-close:hover { background: rgba(147,51,234,0.1); }
+    .memo-tab-add {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 0.625rem;
+      border: 1.5px dashed #d4d4d8;
+      background: transparent;
+      color: #a1a1aa;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+    }
+    .memo-tab-add:hover { border-color: #9333ea; color: #9333ea; background: #faf5ff; }
+
+    /* ====== Toolbar ====== */
+    .memo-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .memo-search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 8rem;
+    }
+    .memo-search-wrap svg {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1rem;
+      height: 1rem;
+      color: #a1a1aa;
+      pointer-events: none;
+    }
+    .memo-search-input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 0.625rem;
+      font-size: 0.8125rem;
+      font-family: inherit;
+      background: white;
+      color: #1e293b;
+      outline: none;
+      transition: all 0.15s ease;
+    }
+    .memo-search-input:focus {
+      border-color: #9333ea;
+      box-shadow: 0 0 0 3px rgba(147,51,234,0.12);
+    }
+    .memo-search-input::placeholder { color: #a1a1aa; }
+    .memo-search-count {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #9333ea;
+      white-space: nowrap;
+    }
+
+    /* ====== Editor Area ====== */
+    .memo-editor-card {
+      background: white;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 1.25rem;
+      overflow: hidden;
+      transition: border-color 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+    .memo-editor-card:focus-within {
+      border-color: #9333ea;
+      box-shadow: 0 0 0 3px rgba(147,51,234,0.08);
+    }
+    .memo-textarea {
+      width: 100%;
+      min-height: 50vh;
+      max-height: 75vh;
+      padding: 1.25rem 1.5rem;
+      border: none;
+      outline: none;
+      resize: vertical;
+      font-size: 1rem;
+      line-height: 1.8;
+      font-family: 'Noto Sans KR', sans-serif;
+      color: #1e293b;
+      background: transparent;
+    }
+    .memo-textarea::placeholder { color: #c4c4cc; }
+
+    /* ====== Status Bar ====== */
+    .memo-status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.625rem 1.25rem;
+      border-top: 1px solid #f1f5f9;
+      background: #fafafa;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      font-weight: 500;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .memo-status-bar .left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .memo-status-bar .right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .save-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+    .save-dot {
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+      background: #22c55e;
+      transition: background 0.3s;
+    }
+    .save-dot.saving { background: #f59e0b; animation: pulse 0.8s ease-in-out infinite; }
+
+    /* ====== Rename Input ====== */
+    .memo-tab-rename {
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      font-family: inherit;
+      color: inherit;
+      width: 5rem;
+      padding: 0;
+    }
+    .memo-tab.active .memo-tab-rename { color: white; }
+
+    /* ====== Toolbar Buttons ====== */
+    .memo-tb-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.5rem 0.875rem;
+      border-radius: 0.625rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      border: 1.5px solid #e2e8f0;
+      background: white;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+    .memo-tb-btn:hover { border-color: #c4b5fd; background: #faf5ff; color: #9333ea; }
+    .memo-tb-btn svg { width: 1rem; height: 1rem; }
+
+    /* ====== Responsive ====== */
+    @media (max-width: 640px) {
+      .memo-textarea { min-height: 55vh; padding: 1rem; font-size: 0.9375rem; }
+      .memo-toolbar { gap: 0.375rem; }
+      .memo-tb-btn span.btn-label { display: none; }
+      .memo-status-bar { padding: 0.5rem 1rem; }
+      .nf-container-tool { padding-left: 0; padding-right: 0; }
+    }
+  </style>
+  <style id="nfDarkOverrides"></style>
+</head>
+<body>
+  <div class="nf-tool-body">
+    <div id="header"></div>
+    <main class="nf-tool-main">
+      <div class="nf-container-tool">
+        <!-- Tab Bar -->
+        <div class="memo-tab-bar" id="tabBar">
+          <button class="memo-tab-add" onclick="createMemo()" title="새 메모 만들기" aria-label="새 메모 만들기">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:1.125rem;height:1.125rem"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          </button>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="memo-toolbar">
+          <div class="memo-search-wrap">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" class="memo-search-input" id="searchInput" placeholder="메모 내용 검색..." oninput="onSearch()">
+          </div>
+          <span class="memo-search-count" id="searchCount"></span>
+          <button class="memo-tb-btn" onclick="exportTxt()" title="TXT 파일로 내보내기">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span class="btn-label">내보내기</span>
+          </button>
+          <button class="memo-tb-btn" onclick="clearCurrentMemo()" title="현재 메모 지우기">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            <span class="btn-label">지우기</span>
+          </button>
+        </div>
+
+        <!-- Editor -->
+        <div class="memo-editor-card" id="editorCard">
+          <textarea class="memo-textarea" id="memoTextarea" placeholder="여기에 메모를 작성하세요...&#10;&#10;자동 저장됩니다." oninput="onTextareaInput()"></textarea>
+          <div class="memo-status-bar">
+            <div class="left">
+              <div class="save-indicator" id="saveIndicator">
+                <div class="save-dot" id="saveDot"></div>
+                <span id="saveText">저장됨</span>
+              </div>
+            </div>
+            <div class="right">
+              <span id="charCount">0 글자</span>
+              <span style="opacity:0.4">·</span>
+              <span id="wordCount">0 단어</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <div id="footer"></div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    // ====== State ======
+    const STORAGE_KEY = 'nf_notepad_memos';
+    let memos = [];
+    let activeId = null;
+    let saveTimer = null;
+    let lastSavedTime = null;
+
+    // ====== Init ======
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('header').innerHTML = toolHeaderHTML('빠른 웹 메모장', '급한 아이디어나 메모를 빠르게 기록하세요. 자동 저장됩니다.');
+      document.getElementById('footer').innerHTML = toolFooterHTML();
+      loadMemos();
+      renderTabs();
+      if (memos.length === 0) {
+        createMemo(true);
+      } else {
+        switchToMemo(activeId || memos[0].id, true);
+      }
+      updateCounts();
+      initNotepadDarkOverrides();
+    });
+
+    // ====== Dark Mode Overrides ======
+    function initNotepadDarkOverrides() {
+      const observer = new MutationObserver(() => updateNotepadDarkStyles());
+      observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+      updateNotepadDarkStyles();
+    }
+
+    function updateNotepadDarkStyles() {
+      const style = document.getElementById('nfDarkOverrides');
+      if (!style) return;
+      const isDark = document.body.classList.contains('dark');
+      style.textContent = isDark ? `
+        .memo-tab { background: #1e293b !important; border-color: #334155 !important; color: #94a3b8 !important; }
+        .memo-tab:hover { border-color: #7c3aed !important; background: #1e293b !important; }
+        .memo-tab-add { border-color: #475569 !important; color: #64748b !important; }
+        .memo-tab-add:hover { border-color: #9333ea !important; color: #9333ea !important; background: transparent !important; }
+        .memo-search-input { background: #1e293b !important; border-color: #334155 !important; color: #e2e8f0 !important; }
+        .memo-search-input::placeholder { color: #475569 !important; }
+        .memo-search-input:focus { border-color: #9333ea !important; box-shadow: 0 0 0 3px rgba(147,51,234,0.15) !important; }
+        .memo-editor-card { background: #0f172a !important; border-color: #1e293b !important; }
+        .memo-editor-card:focus-within { border-color: #9333ea !important; box-shadow: 0 0 0 3px rgba(147,51,234,0.1) !important; }
+        .memo-textarea { color: #e2e8f0 !important; background: transparent !important; }
+        .memo-textarea::placeholder { color: #475569 !important; }
+        .memo-status-bar { background: #0f172a !important; border-top-color: #1e293b !important; color: #64748b !important; }
+        .memo-tb-btn { background: #1e293b !important; border-color: #334155 !important; color: #94a3b8 !important; }
+        .memo-tb-btn:hover { border-color: #7c3aed !important; background: #1e293b !important; color: #c4b5fd !important; }
+        .memo-search-count { color: #c4b5fd !important; }
+      ` : '';
+    }
+
+    // ====== localStorage ======
+    function loadMemos() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          memos = JSON.parse(raw);
+          activeId = localStorage.getItem(STORAGE_KEY + '_active');
+        }
+      } catch (e) { memos = []; }
+      if (!Array.isArray(memos)) memos = [];
+    }
+
+    function saveMemos() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(memos));
+      if (activeId) localStorage.setItem(STORAGE_KEY + '_active', activeId);
+    }
+
+    // ====== CRUD ======
+    function createMemo(silent) {
+      const memo = {
+        id: 'memo_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        name: '메모 ' + (memos.length + 1),
+        content: '',
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+      memos.push(memo);
+      saveMemos();
+      switchToMemo(memo.id, !silent);
+      renderTabs();
+      if (!silent) showToast('새 메모가 생성되었습니다');
+    }
+
+    function switchToMemo(id, noToast) {
+      if (activeId) {
+        const current = memos.find(m => m.id === activeId);
+        if (current) {
+          current.content = document.getElementById('memoTextarea').value;
+          current.updatedAt = Date.now();
+        }
+      }
+      activeId = id;
+      const memo = memos.find(m => m.id === id);
+      const textarea = document.getElementById('memoTextarea');
+      if (memo) {
+        textarea.value = memo.content;
+        lastSavedTime = memo.updatedAt;
+      } else {
+        textarea.value = '';
+      }
+      saveMemos();
+      renderTabs();
+      updateCounts();
+      updateSaveIndicator();
+      clearSearch();
+      if (!noToast) textarea.focus();
+    }
+
+    function deleteMemo(id, e) {
+      e.stopPropagation();
+      if (memos.length <= 1) {
+        showToast('최소 1개의 메모는 유지해야 합니다');
+        return;
+      }
+      const idx = memos.findIndex(m => m.id === id);
+      memos.splice(idx, 1);
+      saveMemos();
+      if (activeId === id) {
+        const newIdx = Math.min(idx, memos.length - 1);
+        switchToMemo(memos[newIdx].id, true);
+      } else {
+        renderTabs();
+      }
+      showToast('메모가 삭제되었습니다');
+    }
+
+    function startRename(id, e) {
+      e.stopPropagation();
+      const tab = document.querySelector('.memo-tab[data-id="' + id + '"]');
+      if (!tab) return;
+      const nameSpan = tab.querySelector('.memo-tab-name');
+      if (!nameSpan) return;
+      const memo = memos.find(m => m.id === id);
+      if (!memo) return;
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'memo-tab-rename';
+      input.value = memo.name;
+      input.maxLength = 20;
+      nameSpan.replaceWith(input);
+      input.focus();
+      input.select();
+      function finishRename() {
+        const newName = input.value.trim() || memo.name;
+        memo.name = newName;
+        saveMemos();
+        renderTabs();
+      }
+      input.addEventListener('blur', finishRename);
+      input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+        if (ev.key === 'Escape') { input.value = memo.name; input.blur(); }
+      });
+    }
+
+    function clearCurrentMemo() {
+      const textarea = document.getElementById('memoTextarea');
+      if (!textarea.value.trim()) return;
+      textarea.value = '';
+      const memo = memos.find(m => m.id === activeId);
+      if (memo) {
+        memo.content = '';
+        memo.updatedAt = Date.now();
+        saveMemos();
+      }
+      updateCounts();
+      triggerAutoSave();
+      showToast('메모 내용이 지워졌습니다');
+    }
+
+    // ====== Render Tabs ======
+    function renderTabs() {
+      const bar = document.getElementById('tabBar');
+      const addBtn = bar.querySelector('.memo-tab-add');
+      bar.innerHTML = '';
+      bar.appendChild(addBtn);
+      memos.forEach(memo => {
+        const tab = document.createElement('div');
+        tab.className = 'memo-tab' + (memo.id === activeId ? ' active' : '');
+        tab.dataset.id = memo.id;
+        tab.onclick = () => switchToMemo(memo.id, true);
+        tab.innerHTML =
+          '<span class="memo-tab-name" ondblclick="startRename(\'' + memo.id + '\', event)" title="더블클릭하여 이름 변경">' + escHTML(memo.name) + '</span>' +
+          '<span class="memo-tab-close" onclick="deleteMemo(\'' + memo.id + '\', event)" title="삭제" aria-label="메모 삭제">' +
+          '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:0.75rem;height:0.75rem"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>' +
+          '</span>';
+        bar.appendChild(tab);
+      });
+    }
+
+    // ====== Auto-Save (Debounced 1s) ======
+    function onTextareaInput() {
+      updateCounts();
+      const dot = document.getElementById('saveDot');
+      const text = document.getElementById('saveText');
+      dot.classList.add('saving');
+      text.textContent = '저장 중...';
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => { saveCurrentContent(); }, 1000);
+    }
+
+    function triggerAutoSave() {
+      const dot = document.getElementById('saveDot');
+      const text = document.getElementById('saveText');
+      dot.classList.add('saving');
+      text.textContent = '저장 중...';
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => { saveCurrentContent(); }, 1000);
+    }
+
+    function saveCurrentContent() {
+      const textarea = document.getElementById('memoTextarea');
+      const memo = memos.find(m => m.id === activeId);
+      if (memo) {
+        memo.content = textarea.value;
+        memo.updatedAt = Date.now();
+        lastSavedTime = memo.updatedAt;
+        saveMemos();
+      }
+      updateSaveIndicator();
+    }
+
+    function updateSaveIndicator() {
+      const dot = document.getElementById('saveDot');
+      const text = document.getElementById('saveText');
+      dot.classList.remove('saving');
+      if (lastSavedTime) {
+        const d = new Date(lastSavedTime);
+        const hh = String(d.getHours()).padStart(2, '0');
+        const mm = String(d.getMinutes()).padStart(2, '0');
+        const ss = String(d.getSeconds()).padStart(2, '0');
+        text.textContent = hh + ':' + mm + ':' + ss + ' 저장됨';
+      } else {
+        text.textContent = '저장됨';
+      }
+    }
+
+    // ====== Counts ======
+    function updateCounts() {
+      const text = document.getElementById('memoTextarea').value;
+      document.getElementById('charCount').textContent = text.length.toLocaleString() + ' 글자';
+      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+      document.getElementById('wordCount').textContent = words.toLocaleString() + ' 단어';
+    }
+
+    // ====== Search ======
+    function onSearch() {
+      const query = document.getElementById('searchInput').value.trim();
+      const countEl = document.getElementById('searchCount');
+      if (!query) { countEl.textContent = ''; return; }
+      let totalMatches = 0;
+      let currentMatches = 0;
+      memos.forEach(memo => {
+        const matches = countOccurrences(memo.content, query);
+        totalMatches += matches;
+        if (memo.id === activeId) currentMatches = matches;
+      });
+      countEl.textContent = '현재: ' + currentMatches + '건 (전체: ' + totalMatches + '건)';
+    }
+
+    function countOccurrences(text, query) {
+      if (!query) return 0;
+      let count = 0;
+      let pos = 0;
+      const lower = text.toLowerCase();
+      const q = query.toLowerCase();
+      while ((pos = lower.indexOf(q, pos)) !== -1) { count++; pos += q.length; }
+      return count;
+    }
+
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('searchCount').textContent = '';
+    }
+
+    // ====== Export ======
+    function exportTxt() {
+      const memo = memos.find(m => m.id === activeId);
+      if (!memo) return;
+      const content = memo.name + '\n' + '='.repeat(memo.name.length) + '\n\n' + (memo.content || '(빈 메모)');
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = sanitizeFilename(memo.name) + '.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('TXT 파일이 다운로드됩니다');
+    }
+
+    function sanitizeFilename(name) {
+      return name.replace(/[^가-힣a-zA-Z0-9_\-\s]/g, '').replace(/\s+/g, '_').slice(0, 50);
+    }
+
+    // ====== Utils ======
+    function escHTML(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>자리 랜덤 뽑기 - Neoflows 무료 툴</title>
+  <meta name="description" content="학교 교실, 회의실, 모임의 자리를 공정하게 랜덤으로 배치합니다. 교실 4x6, 회의실 3x4, 둥근 테이블 프리셋 지원.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/common.css">
+  <style id='nfDarkOverrides'></style>
+  <style>
+    /* ======================================== */
+    /*  Seat Picker - Page Styles                */
+    /*  Color Theme: Sky Blue #0284c7            */
+    /* ======================================== */
+
+    .sp-root {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sp-content {
+      flex: 1;
+      padding: 1.5rem 0 2.5rem;
+    }
+
+    /* --- Preset Bar --- */
+    .sp-preset-bar {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .sp-preset-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.5rem 0.875rem;
+      border-radius: 0.75rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      border: 1.5px solid #e2e8f0;
+      background: white;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .sp-preset-btn:hover {
+      border-color: #0284c7;
+      color: #0284c7;
+      background: #f0f9ff;
+    }
+    .sp-preset-btn.active {
+      border-color: #0284c7;
+      background: linear-gradient(135deg, #0284c7, #0ea5e9);
+      color: white;
+      box-shadow: 0 2px 10px rgba(2,132,199,0.3);
+    }
+    .sp-preset-icon {
+      width: 1rem;
+      height: 1rem;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* --- Two-column Layout --- */
+    .sp-layout {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    /* --- Control Panel --- */
+    .sp-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .sp-section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.5rem;
+    }
+
+    /* --- Names Textarea --- */
+    .sp-names {
+      width: 100%;
+      min-height: 150px;
+      padding: 0.75rem 1rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 0.75rem;
+      font-size: 0.875rem;
+      font-family: inherit;
+      background: white;
+      color: #1e293b;
+      resize: vertical;
+      outline: none;
+      line-height: 1.75;
+      transition: all 0.15s ease;
+    }
+    .sp-names:focus {
+      border-color: #0284c7;
+      box-shadow: 0 0 0 3px rgba(2,132,199,0.12);
+    }
+    .sp-names::placeholder { color: #94a3b8; }
+    .sp-name-count {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      font-weight: 600;
+      text-align: right;
+      margin-top: 0.25rem;
+    }
+    .sp-name-count b {
+      color: #0284c7;
+    }
+
+    /* --- Column Selector --- */
+    .sp-col-bar {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+    }
+    .sp-col-btn {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 0.625rem;
+      border: 1.5px solid #e2e8f0;
+      background: white;
+      color: #475569;
+      font-size: 0.875rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sp-col-btn:hover {
+      border-color: #0284c7;
+      color: #0284c7;
+    }
+    .sp-col-btn.active {
+      border-color: #0284c7;
+      background: #0284c7;
+      color: white;
+      box-shadow: 0 2px 8px rgba(2,132,199,0.25);
+    }
+
+    /* --- Row Input --- */
+    .sp-row-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+    .sp-row-row label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #475569;
+      white-space: nowrap;
+    }
+    .sp-row-num {
+      width: 3.75rem;
+      height: 2.5rem;
+      text-align: center;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 0.625rem;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: inherit;
+      color: #1e293b;
+      background: white;
+      outline: none;
+      transition: all 0.15s ease;
+    }
+    .sp-row-num:focus {
+      border-color: #0284c7;
+      box-shadow: 0 0 0 3px rgba(2,132,199,0.12);
+    }
+    .sp-total-hint {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+    .sp-total-hint b {
+      color: #0284c7;
+      font-weight: 700;
+    }
+
+    /* --- Shuffle Button --- */
+    .sp-shuffle-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.625rem;
+      width: 100%;
+      padding: 0.875rem 1.5rem;
+      border-radius: 1rem;
+      border: none;
+      background: linear-gradient(135deg, #0284c7, #0ea5e9);
+      color: white;
+      font-size: 1rem;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(2,132,199,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    .sp-shuffle-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transform: translateX(-100%);
+    }
+    .sp-shuffle-btn:hover {
+      box-shadow: 0 6px 20px rgba(2,132,199,0.4);
+      transform: translateY(-1px);
+    }
+    .sp-shuffle-btn:active {
+      transform: scale(0.97);
+    }
+    .sp-shuffle-btn.shuffling {
+      animation: spGlow 0.5s ease-in-out infinite alternate;
+    }
+    .sp-shuffle-btn.shuffling::after {
+      animation: spSweep 0.8s ease-in-out infinite;
+    }
+    .sp-shuffle-btn svg {
+      transition: transform 0.3s ease;
+    }
+    .sp-shuffle-btn.shuffling svg {
+      animation: spSpin 0.7s linear infinite;
+    }
+    @keyframes spGlow {
+      from { box-shadow: 0 4px 14px rgba(2,132,199,0.3); }
+      to   { box-shadow: 0 4px 30px rgba(2,132,199,0.55); }
+    }
+    @keyframes spSweep {
+      from { transform: translateX(-100%); }
+      to   { transform: translateX(100%); }
+    }
+    @keyframes spSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* --- Export Bar --- */
+    .sp-export-bar {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .sp-export-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.375rem;
+      padding: 0.625rem 0.75rem;
+      border-radius: 0.75rem;
+      border: 1.5px solid #e2e8f0;
+      background: white;
+      color: #475569;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .sp-export-btn:hover {
+      border-color: #0284c7;
+      color: #0284c7;
+      background: #f0f9ff;
+    }
+    .sp-export-btn svg {
+      width: 0.875rem;
+      height: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    /* --- Grid Display --- */
+    .sp-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* --- Teacher Podium --- */
+    .sp-podium {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.625rem 1.5rem;
+      border-radius: 1rem;
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 2px solid #f59e0b;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 10px rgba(245,158,11,0.18);
+    }
+    .sp-podium-icon {
+      width: 1.5rem;
+      height: 1.5rem;
+      color: #d97706;
+      flex-shrink: 0;
+    }
+    .sp-podium-title {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: #92400e;
+    }
+    .sp-podium-sub {
+      font-size: 0.6875rem;
+      color: #b45309;
+      font-weight: 500;
+    }
+
+    /* --- Info Chips --- */
+    .sp-info-bar {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .sp-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 9999px;
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #0369a1;
+    }
+    .sp-chip svg {
+      width: 0.75rem;
+      height: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    /* --- Seat Grid --- */
+    .sp-grid {
+      display: grid;
+      gap: 0.5rem;
+      width: 100%;
+      justify-content: center;
+    }
+
+    /* --- Seat Card --- */
+    .sp-seat {
+      border-radius: 0.75rem;
+      min-height: 3.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      position: relative;
+      padding: 0.375rem 0.5rem;
+      text-align: center;
+      word-break: break-all;
+      line-height: 1.3;
+    }
+    .sp-seat.filled {
+      background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+      border: 1.5px solid #bae6fd;
+      color: #0c4a6e;
+      box-shadow: 0 1px 4px rgba(2,132,199,0.08);
+    }
+    .sp-seat.filled:hover {
+      box-shadow: 0 4px 12px rgba(2,132,199,0.15);
+      transform: translateY(-1px);
+    }
+    .sp-seat.empty {
+      background: transparent;
+      border: 2px dashed #cbd5e1;
+      color: #cbd5e1;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .sp-seat.pop-in {
+      opacity: 0;
+      animation: spPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes spPop {
+      0%   { opacity: 0; transform: scale(0.6) rotateY(90deg); }
+      60%  { transform: scale(1.06) rotateY(-4deg); }
+      100% { opacity: 1; transform: scale(1) rotateY(0deg); }
+    }
+    .sp-seat.flip-out {
+      animation: spFlipOut 0.25s ease-in forwards;
+    }
+    @keyframes spFlipOut {
+      to { opacity: 0; transform: scale(0.85) rotateY(90deg); }
+    }
+    .sp-seat-num {
+      position: absolute;
+      top: 0.125rem;
+      left: 0.375rem;
+      font-size: 0.5625rem;
+      font-weight: 700;
+      color: #7dd3fc;
+      opacity: 0.7;
+    }
+
+    /* --- Round Table --- */
+    .sp-round-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 460px;
+      aspect-ratio: 1 / 1;
+      margin: 0 auto;
+    }
+    .sp-round-table {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 36%;
+      height: 36%;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+      border: 2.5px solid #7dd3fc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 18px rgba(2,132,199,0.12);
+    }
+    .sp-round-table-text {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: #0369a1;
+      text-align: center;
+    }
+    .sp-round-seat {
+      position: absolute;
+      width: 3.5rem;
+      height: 3.5rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-align: center;
+      word-break: break-all;
+      line-height: 1.2;
+      transition: all 0.3s ease;
+      transform: translate(-50%, -50%);
+    }
+    .sp-round-seat.filled {
+      background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+      border: 2px solid #bae6fd;
+      color: #0c4a6e;
+      box-shadow: 0 2px 8px rgba(2,132,199,0.12);
+    }
+    .sp-round-seat.empty {
+      background: transparent;
+      border: 2px dashed #cbd5e1;
+      color: #cbd5e1;
+      font-size: 0.6875rem;
+      font-weight: 500;
+    }
+    .sp-round-seat.pop-in {
+      opacity: 0;
+      animation: spRoundPop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes spRoundPop {
+      0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+      60%  { transform: translate(-50%, -50%) scale(1.1); }
+      100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+
+    /* --- Empty State --- */
+    .sp-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3.5rem 1.5rem;
+      color: #94a3b8;
+      text-align: center;
+      gap: 0.75rem;
+    }
+    .sp-empty svg {
+      width: 3.5rem;
+      height: 3.5rem;
+      color: #cbd5e1;
+      opacity: 0.5;
+    }
+    .sp-empty p {
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    .sp-empty span {
+      font-size: 0.75rem;
+      color: #cbd5e1;
+    }
+
+    /* --- History --- */
+    .sp-history {
+      max-height: 12rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+    }
+    .sp-history::-webkit-scrollbar { width: 4px; }
+    .sp-history::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+    .sp-hist-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.625rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      font-size: 0.75rem;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .sp-hist-item:hover {
+      background: #f0f9ff;
+      border-color: #bae6fd;
+    }
+    .sp-hist-time {
+      font-size: 0.6875rem;
+      color: #94a3b8;
+      font-weight: 500;
+      white-space: nowrap;
+      margin-left: 0.5rem;
+    }
+    .sp-hist-del {
+      background: none;
+      border: none;
+      color: #cbd5e1;
+      cursor: pointer;
+      padding: 0.125rem;
+      display: flex;
+      align-items: center;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+    .sp-hist-del:hover { color: #ef4444; }
+
+    /* --- Modal --- */
+    .sp-modal-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .sp-modal-bg.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .sp-modal-box {
+      background: white;
+      border-radius: 1.5rem;
+      padding: 1.75rem;
+      max-width: 28rem;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      transform: scale(0.95);
+      transition: transform 0.2s ease;
+    }
+    .sp-modal-bg.show .sp-modal-box {
+      transform: scale(1);
+    }
+    .sp-modal-box h3 {
+      font-size: 1.0625rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 0.75rem;
+    }
+    .sp-modal-ta {
+      width: 100%;
+      min-height: 180px;
+      padding: 0.75rem 1rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 0.75rem;
+      font-size: 0.8125rem;
+      font-family: 'Noto Sans KR', monospace;
+      background: #f8fafc;
+      color: #1e293b;
+      resize: vertical;
+      outline: none;
+      line-height: 1.75;
+    }
+    .sp-modal-ta:focus {
+      border-color: #0284c7;
+    }
+    .sp-modal-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    /* --- Confetti --- */
+    .sp-confetti {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      pointer-events: none;
+      z-index: 9999;
+      animation: spConfettiFall 1.5s ease-out forwards;
+    }
+    @keyframes spConfettiFall {
+      0%   { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+      100% { opacity: 0; transform: translateY(400px) rotate(720deg) scale(0.3); }
+    }
+
+    /* --- Responsive --- */
+    @media (max-width: 860px) {
+      .sp-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 768px) {
+      .sp-round-wrap { max-width: 340px; }
+      .sp-round-seat { width: 2.75rem; height: 2.75rem; font-size: 0.625rem; }
+      .sp-seat { min-height: 2.75rem; font-size: 0.75rem; }
+      .sp-podium { padding: 0.5rem 1rem; margin-bottom: 1rem; }
+    }
+    @media (max-width: 480px) {
+      .sp-grid { gap: 0.375rem; }
+      .sp-round-wrap { max-width: 280px; }
+      .sp-round-seat { width: 2.25rem; height: 2.25rem; font-size: 0.5625rem; }
+      .sp-seat { min-height: 2.5rem; font-size: 0.6875rem; padding: 0.25rem 0.375rem; }
+      .sp-preset-btn { padding: 0.375rem 0.625rem; font-size: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sp-root" id="app"></div>
+
+  <script src="js/common.js"></script>
+
+  <script>
+    /* ======================================== */
+    /*  Seat Picker - Application Logic          */
+    /*  Theme: Sky Blue #0284c7                  */
+    /* ======================================== */
+    (function () {
+      'use strict';
+
+      /* ---------- State ---------- */
+      var state = {
+        names: [],
+        cols: 4,
+        rows: 6,
+        layout: 'grid',       // 'grid' | 'round'
+        activePreset: null,
+        shuffled: [],
+        history: [],
+        isAnimating: false
+      };
+
+      try {
+        state.history = JSON.parse(localStorage.getItem('sp_history') || '[]');
+      } catch(e) {
+        state.history = [];
+      }
+
+      /* ---------- Presets ---------- */
+      var PRESETS = {
+        classroom: {
+          key: 'classroom',
+          name: '교실 4\u00D76',
+          cols: 4, rows: 6, layout: 'grid',
+          icon: '<svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="3.5" height="3.5" rx=".5"/><rect x="5.5" y="1" width="3.5" height="3.5" rx=".5"/><rect x="10" y="1" width="3.5" height="3.5" rx=".5"/><rect x="1" y="5.5" width="3.5" height="3.5" rx=".5"/><rect x="5.5" y="5.5" width="3.5" height="3.5" rx=".5"/><rect x="10" y="5.5" width="3.5" height="3.5" rx=".5"/><rect x="1" y="10" width="3.5" height="3.5" rx=".5"/><rect x="5.5" y="10" width="3.5" height="3.5" rx=".5"/><rect x="10" y="10" width="3.5" height="3.5" rx=".5"/></svg>'
+        },
+        meeting: {
+          key: 'meeting',
+          name: '회의실 3\u00D74',
+          cols: 3, rows: 4, layout: 'grid',
+          icon: '<svg viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="1" width="4" height="4" rx=".5"/><rect x="8" y="1" width="4" height="4" rx=".5"/><rect x="2" y="6" width="4" height="4" rx=".5"/><rect x="8" y="6" width="4" height="4" rx=".5"/></svg>'
+        },
+        round: {
+          key: 'round',
+          name: '모임 둥근 테이블',
+          cols: 0, rows: 0, layout: 'round',
+          icon: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="3.5"/><circle cx="8" cy="2" r="1.2" fill="currentColor"/><circle cx="13" cy="5" r="1.2" fill="currentColor"/><circle cx="13" cy="11" r="1.2" fill="currentColor"/><circle cx="8" cy="14" r="1.2" fill="currentColor"/><circle cx="3" cy="11" r="1.2" fill="currentColor"/><circle cx="3" cy="5" r="1.2" fill="currentColor"/></svg>'
+        }
+      };
+
+      /* ---------- Helpers ---------- */
+      function esc(s) {
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+      }
+
+      function getRoundSeats() {
+        return Math.max(3, state.names.length || 8);
+      }
+
+      function totalSeats() {
+        return state.layout === 'round' ? getRoundSeats() : state.cols * state.rows;
+      }
+
+      function parseNames() {
+        var ta = document.getElementById('spNames');
+        if (!ta) return state.names;
+        var txt = ta.value.trim();
+        return txt ? txt.split('\n').map(function(n){ return n.trim(); }).filter(function(n){ return n; }) : [];
+      }
+
+      function shuffle(arr) {
+        var a = arr.slice();
+        for (var i = a.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+        }
+        return a;
+      }
+
+      /* ---------- Renderers ---------- */
+      function renderInfoBar() {
+        var total = totalSeats();
+        var filled = state.shuffled.length;
+        var layoutLabel = state.layout === 'round' ? '원형' : (state.cols + '\u00D7' + state.rows);
+        return '<div class="sp-chip">' +
+          '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>' +
+          esc(layoutLabel) + '</div>' +
+          '<div class="sp-chip">' +
+          '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
+          filled + '/' + total + '명</div>';
+      }
+
+      function renderEmptyState() {
+        return '<div class="sp-empty">' +
+          '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>' +
+          '<p>이름을 입력하고 \'자리 섞기\'를 눌러보세요!</p>' +
+          '<span>프리셋을 선택하면 빠르게 설정할 수 있어요</span></div>';
+      }
+
+      function renderPodium(isRound) {
+        var title = isRound ? '진행자' : '교사/발표자';
+        var sub   = isRound ? '모임 진행 방향' : '칠판 / 스크린 방향';
+        return '<div class="sp-podium">' +
+          '<svg class="sp-podium-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>' +
+          '<div><div class="sp-podium-title">앞 방향 (' + esc(title) + ')</div>' +
+          '<div class="sp-podium-sub">' + esc(sub) + '</div></div></div>';
+      }
+
+      function renderGrid() {
+        if (state.shuffled.length === 0 && state.names.length === 0) return renderEmptyState();
+        if (state.layout === 'round') return renderRoundTable();
+        return renderGridLayout();
+      }
+
+      function renderGridLayout() {
+        var total = state.cols * state.rows;
+        var names = state.shuffled.slice();
+        var html = renderPodium(false);
+        html += '<div class="sp-grid" style="grid-template-columns:repeat(' + state.cols + ',1fr)">';
+        for (var i = 0; i < total; i++) {
+          var name = names[i] || null;
+          if (name) {
+            html += '<div class="sp-seat filled pop-in" style="animation-delay:' + (i * 0.04) + 's">' +
+              '<span class="sp-seat-num">' + (i + 1) + '</span>' + esc(name) + '</div>';
+          } else {
+            html += '<div class="sp-seat empty pop-in" style="animation-delay:' + (i * 0.04) + 's">' + (i + 1) + '번</div>';
+          }
+        }
+        html += '</div>';
+        return html;
+      }
+
+      function renderRoundTable() {
+        var count = getRoundSeats();
+        var names = state.shuffled.slice();
+        var html = renderPodium(true);
+        html += '<div class="sp-round-wrap">';
+        html += '<div class="sp-round-table"><span class="sp-round-table-text">테이블</span></div>';
+        for (var i = 0; i < count; i++) {
+          var angle = (2 * Math.PI * i / count) - Math.PI / 2;
+          var r = 46;
+          var x = 50 + r * Math.cos(angle);
+          var y = 50 + r * Math.sin(angle);
+          var name = names[i] || null;
+          if (name) {
+            html += '<div class="sp-round-seat filled pop-in" style="left:' + x + '%;top:' + y + '%;animation-delay:' + (i * 0.06) + 's">' + esc(name) + '</div>';
+          } else {
+            html += '<div class="sp-round-seat empty pop-in" style="left:' + x + '%;top:' + y + '%;animation-delay:' + (i * 0.06) + 's">' + (i + 1) + '</div>';
+          }
+        }
+        html += '</div>';
+        return html;
+      }
+
+      function renderHistory() {
+        if (state.history.length === 0) {
+          return '<div style="text-align:center;padding:1rem;color:#94a3b8;font-size:0.8125rem;font-weight:500;">아직 배치 기록이 없습니다</div>';
+        }
+        return state.history.map(function(e, i) {
+          var t = new Date(e.time).toLocaleString('ko-KR', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+          return '<div class="sp-hist-item" data-hi="' + i + '">' +
+            '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(e.label) + '</span>' +
+            '<span class="sp-hist-time">' + t + '</span>' +
+            '<button class="sp-hist-del" data-hd="' + i + '" title="삭제">' +
+            '<svg width="0.875rem" height="0.875rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' +
+            '</button></div>';
+        }).join('');
+      }
+
+      /* ---------- Main Render ---------- */
+      function render() {
+        var app = document.getElementById('app');
+        var presetBtns = Object.values(PRESETS).map(function(p) {
+          return '<button class="sp-preset-btn ' + (state.activePreset === p.key ? 'active' : '') + '" data-pk="' + p.key + '">' +
+            '<span class="sp-preset-icon">' + p.icon + '</span>' + esc(p.name) + '</button>';
+        }).join('');
+
+        var colBtns = [2,3,4,5,6,7,8].map(function(c) {
+          return '<button class="sp-col-btn ' + (state.cols === c ? 'active' : '') + '" data-col="' + c + '">' + c + '</button>';
+        }).join('');
+
+        var namesVal = state.names.join('\n');
+
+        app.innerHTML =
+          toolHeaderHTML('자리 랜덤 뽑기', '학교 교실, 회의실, 모임의 자리를 공정하게 랜덤으로 배치합니다.') +
+          '<main class="sp-content"><div class="nf-container"><div class="sp-layout">' +
+
+          /* Left: Control Panel */
+          '<div class="sp-panel stagger-hidden animate-fade-in-up">' +
+
+            /* Presets */
+            '<div class="nf-card"><div class="sp-section-label">빠른 설정</div>' +
+            '<div class="sp-preset-bar">' + presetBtns + '</div></div>' +
+
+            /* Names */
+            '<div class="nf-card"><div class="sp-section-label">이름 목록</div>' +
+            '<textarea id="spNames" class="sp-names" placeholder="이름을 한 줄에 하나씩 입력하세요&#10;예시:&#10;김민수&#10;이지은&#10;박서연&#10;최도현">' + esc(namesVal) + '</textarea>' +
+            '<div class="sp-name-count" id="spNameCount"><b>' + state.names.length + '</b>명</div></div>' +
+
+            /* Grid Config */
+            '<div class="nf-card" id="spGridCfg" style="' + (state.layout === 'round' ? 'display:none' : '') + '">' +
+            '<div class="sp-section-label">배치 설정</div>' +
+            '<div><label style="font-size:0.8125rem;font-weight:600;color:#475569;display:block;margin-bottom:0.5rem;">열 (가로) 개수</label>' +
+            '<div class="sp-col-bar">' + colBtns + '</div></div>' +
+            '<div class="sp-row-row">' +
+            '<label>행 (세로) 개수</label>' +
+            '<input type="number" id="spRows" class="sp-row-num" value="' + state.rows + '" min="1" max="20">' +
+            '<span class="sp-total-hint">총 <b>' + (state.cols * state.rows) + '</b>자리</span></div></div>' +
+
+            /* Round Config */
+            '<div class="nf-card" id="spRoundCfg" style="' + (state.layout === 'grid' ? 'display:none' : '') + '">' +
+            '<div class="sp-section-label">둥근 테이블 설정</div>' +
+            '<div class="sp-row-row">' +
+            '<label>좌석 수</label>' +
+            '<input type="number" id="spRoundSeats" class="sp-row-num" value="' + getRoundSeats() + '" min="3" max="20">' +
+            '<span class="sp-total-hint">원형 배치</span></div></div>' +
+
+            /* Shuffle Button */
+            '<button class="sp-shuffle-btn" id="spShuffleBtn">' +
+            '<svg width="1.125rem" height="1.125rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>' +
+            '자리 섞기</button>' +
+
+            /* Export */
+            '<div class="sp-export-bar">' +
+            '<button class="sp-export-btn" id="spCopyBtn">' +
+            '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>' +
+            '텍스트 복사</button>' +
+            '<button class="sp-export-btn" id="spSaveBtn">' +
+            '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>' +
+            '이미지 저장</button></div>' +
+
+          '</div>' +
+
+          /* Right: Display */
+          '<div class="sp-display stagger-hidden animate-fade-in-up delay-2">' +
+            '<div class="nf-card" style="width:100%;">' +
+            '<div class="sp-info-bar" id="spInfoBar">' + renderInfoBar() + '</div>' +
+            '<div id="spGrid">' + renderGrid() + '</div></div>' +
+
+            /* History */
+            '<div class="nf-card" style="width:100%;margin-top:1rem;">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">' +
+            '<div class="sp-section-label" style="margin-bottom:0;">배치 기록</div>' +
+            '<button id="spClearHist" style="background:none;border:none;color:#94a3b8;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:inherit;padding:0.25rem 0.5rem;border-radius:0.375rem;transition:all 0.15s;">전체 삭제</button>' +
+            '</div>' +
+            '<div class="sp-history" id="spHist">' + renderHistory() + '</div></div>' +
+
+          '</div>' +
+
+          '</div></div></main>' +
+
+          toolFooterHTML() +
+
+          /* Export Modal */
+          '<div class="sp-modal-bg" id="spModalBg">' +
+          '<div class="sp-modal-box">' +
+          '<h3>\uD83D\uDCCB 배치 결과</h3>' +
+          '<textarea id="spModalTa" class="sp-modal-ta" readonly></textarea>' +
+          '<div class="sp-modal-actions">' +
+          '<button class="nf-btn nf-btn-sky" id="spModalCopyBtn" style="flex:1;">복사하기</button>' +
+          '<button class="nf-btn nf-btn-ghost" id="spModalCloseBtn" style="flex:1;">닫기</button>' +
+          '</div></div></div>';
+
+        bindEvents();
+      }
+
+      /* ---------- Refresh grid display only ---------- */
+      function refreshGrid() {
+        var gridEl = document.getElementById('spGrid');
+        var infoEl = document.getElementById('spInfoBar');
+        if (gridEl) gridEl.innerHTML = renderGrid();
+        if (infoEl) infoEl.innerHTML = renderInfoBar();
+      }
+
+      /* ---------- Event Binding ---------- */
+      function bindEvents() {
+        /* Name textarea */
+        var namesEl = document.getElementById('spNames');
+        if (namesEl) {
+          namesEl.addEventListener('input', function() {
+            state.names = parseNames();
+            var cnt = document.getElementById('spNameCount');
+            if (cnt) cnt.innerHTML = '<b>' + state.names.length + '</b>명';
+            if (state.layout === 'round') {
+              var ri = document.getElementById('spRoundSeats');
+              if (ri && parseInt(ri.value) < state.names.length) ri.value = state.names.length;
+            }
+            state.activePreset = null;
+            document.querySelectorAll('.sp-preset-btn').forEach(function(b){ b.classList.remove('active'); });
+            if (state.shuffled.length > 0) refreshGrid();
+          });
+        }
+
+        /* Preset buttons */
+        document.querySelectorAll('.sp-preset-btn').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var key = btn.dataset.pk;
+            var p = PRESETS[key];
+            if (!p) return;
+            state.activePreset = key;
+            state.layout = p.layout;
+            state.shuffled = [];
+
+            var gc = document.getElementById('spGridCfg');
+            var rc = document.getElementById('spRoundCfg');
+            if (p.layout === 'round') {
+              if (gc) gc.style.display = 'none';
+              if (rc) rc.style.display = '';
+              var ri = document.getElementById('spRoundSeats');
+              if (ri) ri.value = Math.max(3, state.names.length || 8);
+            } else {
+              state.cols = p.cols;
+              state.rows = p.rows;
+              if (gc) gc.style.display = '';
+              if (rc) rc.style.display = 'none';
+              document.querySelectorAll('.sp-col-btn').forEach(function(b){
+                b.classList.toggle('active', parseInt(b.dataset.col) === state.cols);
+              });
+              var rowIn = document.getElementById('spRows');
+              if (rowIn) rowIn.value = state.rows;
+              var hint = document.querySelector('.sp-total-hint');
+              if (hint) hint.innerHTML = '총 <b>' + (state.cols * state.rows) + '</b>자리';
+            }
+
+            document.querySelectorAll('.sp-preset-btn').forEach(function(b){ b.classList.remove('active'); });
+            btn.classList.add('active');
+            refreshGrid();
+          });
+        });
+
+        /* Column buttons */
+        document.querySelectorAll('.sp-col-btn').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            state.cols = parseInt(btn.dataset.col);
+            state.activePreset = null;
+            document.querySelectorAll('.sp-col-btn').forEach(function(b){ b.classList.remove('active'); });
+            btn.classList.add('active');
+            document.querySelectorAll('.sp-preset-btn').forEach(function(b){ b.classList.remove('active'); });
+            var hint = document.querySelector('.sp-total-hint');
+            if (hint) hint.innerHTML = '총 <b>' + (state.cols * state.rows) + '</b>자리';
+            if (state.shuffled.length > 0) refreshGrid();
+          });
+        });
+
+        /* Row input */
+        var rowIn = document.getElementById('spRows');
+        if (rowIn) {
+          rowIn.addEventListener('change', function() {
+            var v = Math.max(1, Math.min(20, parseInt(rowIn.value) || 1));
+            state.rows = v;
+            rowIn.value = v;
+            state.activePreset = null;
+            document.querySelectorAll('.sp-preset-btn').forEach(function(b){ b.classList.remove('active'); });
+            var hint = document.querySelector('.sp-total-hint');
+            if (hint) hint.innerHTML = '총 <b>' + (state.cols * state.rows) + '</b>자리';
+            if (state.shuffled.length > 0) refreshGrid();
+          });
+        }
+
+        /* Round seats input */
+        var roundIn = document.getElementById('spRoundSeats');
+        if (roundIn) {
+          roundIn.addEventListener('change', function() {
+            var v = Math.max(3, Math.min(20, parseInt(roundIn.value) || 3));
+            roundIn.value = v;
+            state.activePreset = null;
+            document.querySelectorAll('.sp-preset-btn').forEach(function(b){ b.classList.remove('active'); });
+            if (state.shuffled.length > 0) refreshGrid();
+          });
+        }
+
+        /* Shuffle button */
+        var shuffleBtn = document.getElementById('spShuffleBtn');
+        if (shuffleBtn) shuffleBtn.addEventListener('click', doShuffle);
+
+        /* Export buttons */
+        var copyBtn = document.getElementById('spCopyBtn');
+        if (copyBtn) copyBtn.addEventListener('click', exportText);
+        var saveBtn = document.getElementById('spSaveBtn');
+        if (saveBtn) saveBtn.addEventListener('click', saveImage);
+
+        /* Modal */
+        var modalBg = document.getElementById('spModalBg');
+        var modalClose = document.getElementById('spModalCloseBtn');
+        var modalCopy = document.getElementById('spModalCopyBtn');
+        if (modalClose) modalClose.addEventListener('click', function(){ modalBg.classList.remove('show'); });
+        if (modalCopy) modalCopy.addEventListener('click', function() {
+          copyToClipboard(document.getElementById('spModalTa').value, '배치 결과가 복사되었습니다!');
+          modalBg.classList.remove('show');
+        });
+        if (modalBg) {
+          modalBg.addEventListener('click', function(e) {
+            if (e.target === modalBg) modalBg.classList.remove('show');
+          });
+        }
+
+        /* Clear history */
+        var clearHist = document.getElementById('spClearHist');
+        if (clearHist) {
+          clearHist.addEventListener('click', function() {
+            state.history = [];
+            localStorage.removeItem('sp_history');
+            document.getElementById('spHist').innerHTML = renderHistory();
+            rebindHistory();
+            showToast('기록이 삭제되었습니다.');
+          });
+          clearHist.addEventListener('mouseover', function(){ this.style.color = '#ef4444'; });
+          clearHist.addEventListener('mouseout', function(){ this.style.color = '#94a3b8'; });
+        }
+
+        rebindHistory();
+      }
+
+      function rebindHistory() {
+        /* History item click -> restore */
+        document.querySelectorAll('.sp-hist-item').forEach(function(item) {
+          item.addEventListener('click', function(e) {
+            if (e.target.closest('.sp-hist-del')) return;
+            var idx = parseInt(item.dataset.hi);
+            var entry = state.history[idx];
+            if (!entry) return;
+            state.shuffled = entry.names.slice();
+            if (entry.layout === 'round') {
+              state.layout = 'round';
+              var ri = document.getElementById('spRoundSeats');
+              if (ri) ri.value = entry.roundSeats || 8;
+            } else {
+              state.layout = 'grid';
+              state.cols = entry.cols;
+              state.rows = entry.rows;
+              var rowIn = document.getElementById('spRows');
+              if (rowIn) rowIn.value = state.rows;
+              document.querySelectorAll('.sp-col-btn').forEach(function(b){
+                b.classList.toggle('active', parseInt(b.dataset.col) === state.cols);
+              });
+              var hint = document.querySelector('.sp-total-hint');
+              if (hint) hint.innerHTML = '총 <b>' + (state.cols * state.rows) + '</b>자리';
+            }
+            var gc = document.getElementById('spGridCfg');
+            var rc = document.getElementById('spRoundCfg');
+            if (gc) gc.style.display = state.layout === 'grid' ? '' : 'none';
+            if (rc) rc.style.display = state.layout === 'round' ? '' : 'none';
+            refreshGrid();
+            showToast('이전 배치가 복원되었습니다.');
+          });
+        });
+        /* History delete */
+        document.querySelectorAll('.sp-hist-del').forEach(function(btn) {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var idx = parseInt(btn.dataset.hd);
+            state.history.splice(idx, 1);
+            localStorage.setItem('sp_history', JSON.stringify(state.history));
+            document.getElementById('spHist').innerHTML = renderHistory();
+            rebindHistory();
+          });
+        });
+      }
+
+      /* ---------- Shuffle Action ---------- */
+      function doShuffle() {
+        if (state.isAnimating) return;
+        var names = parseNames();
+        if (names.length === 0) {
+          showToast('이름을 몇 개 입력해주세요!');
+          return;
+        }
+        state.isAnimating = true;
+        var btn = document.getElementById('spShuffleBtn');
+        if (btn) btn.classList.add('shuffling');
+
+        /* Flip-out existing seats */
+        var seats = document.querySelectorAll('.sp-seat, .sp-round-seat');
+        seats.forEach(function(s, i) {
+          s.style.animationDelay = (i * 0.02) + 's';
+          s.classList.remove('pop-in');
+          s.classList.add('flip-out');
+        });
+
+        setTimeout(function() {
+          state.shuffled = shuffle(names);
+          state.names = names;
+          refreshGrid();
+
+          var hint = document.querySelector('.sp-total-hint');
+          if (hint && state.layout === 'grid') {
+            hint.innerHTML = '총 <b>' + (state.cols * state.rows) + '</b>자리';
+          }
+
+          if (btn) btn.classList.remove('shuffling');
+          state.isAnimating = false;
+
+          launchConfetti();
+
+          /* Save history */
+          var label = names.length + '명 ' + (state.layout === 'round' ? '원형' : state.cols + '\u00D7' + state.rows);
+          state.history.unshift({
+            label: label,
+            time: Date.now(),
+            names: state.shuffled.slice(),
+            cols: state.cols,
+            rows: state.rows,
+            layout: state.layout,
+            roundSeats: state.layout === 'round' ? getRoundSeats() : undefined
+          });
+          if (state.history.length > 20) state.history = state.history.slice(0, 20);
+          localStorage.setItem('sp_history', JSON.stringify(state.history));
+          var histEl = document.getElementById('spHist');
+          if (histEl) {
+            histEl.innerHTML = renderHistory();
+            rebindHistory();
+          }
+        }, 350);
+      }
+
+      /* ---------- Confetti ---------- */
+      function launchConfetti() {
+        var colors = ['#0284c7', '#0ea5e9', '#38bdf8', '#7dd3fc', '#f59e0b', '#fbbf24', '#a78bfa', '#f472b6'];
+        for (var i = 0; i < 30; i++) {
+          var el = document.createElement('div');
+          el.className = 'sp-confetti';
+          el.style.left = (Math.random() * 100) + 'vw';
+          el.style.top = '-10px';
+          el.style.background = colors[Math.floor(Math.random() * colors.length)];
+          el.style.animationDelay = (Math.random() * 0.5) + 's';
+          el.style.width = (4 + Math.random() * 8) + 'px';
+          el.style.height = (4 + Math.random() * 8) + 'px';
+          document.body.appendChild(el);
+          (function(elem){ setTimeout(function(){ elem.remove(); }, 2200); })(el);
+        }
+      }
+
+      /* ---------- Export as Text ---------- */
+      function exportText() {
+        if (state.shuffled.length === 0) {
+          showToast('먼저 자리를 섞어주세요!');
+          return;
+        }
+        var text = '';
+        if (state.layout === 'round') {
+          text = '[ 둥근 테이블 배치 ]\n';
+          var count = getRoundSeats();
+          for (var i = 0; i < count; i++) {
+            var name = state.shuffled[i] || '-';
+            text += (i + 1) + '번: ' + name + '\n';
+          }
+        } else {
+          text = '[ 교실 배치 (' + state.cols + '\u00D7' + state.rows + ') ]\n';
+          text += '\u25B2 앞 (교사/발표자)\n\n';
+          for (var r = 0; r < state.rows; r++) {
+            var row = '';
+            for (var c = 0; c < state.cols; c++) {
+              var idx = r * state.cols + c;
+              var nm = state.shuffled[idx] || '-';
+              row += (idx + 1) + '.' + nm + '\t';
+            }
+            text += row.trim() + '\n';
+          }
+        }
+        text += '\n' + new Date().toLocaleString('ko-KR') + ' | Neoflows 자리 뽑기';
+
+        var modalTa = document.getElementById('spModalTa');
+        if (modalTa) modalTa.value = text;
+        document.getElementById('spModalBg').classList.add('show');
+      }
+
+      /* ---------- Save as Image (Canvas) ---------- */
+      function saveImage() {
+        if (state.shuffled.length === 0) {
+          showToast('먼저 자리를 섞어주세요!');
+          return;
+        }
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
+        var isRound = state.layout === 'round';
+
+        if (isRound) {
+          canvas.width = 600;
+          canvas.height = 660;
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillRect(0, 0, 600, 660);
+          ctx.fillStyle = '#0f172a';
+          ctx.font = 'bold 18px "Noto Sans KR", sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('자리 배치 (둥근 테이블)', 300, 35);
+          ctx.fillStyle = '#92400e';
+          ctx.font = 'bold 12px "Noto Sans KR", sans-serif';
+          ctx.fillText('\u25B2 앞 (진행자)', 300, 60);
+          var cx = 300, cy = 350;
+          ctx.beginPath();
+          ctx.arc(cx, cy, 80, 0, Math.PI * 2);
+          ctx.fillStyle = '#e0f2fe';
+          ctx.fill();
+          ctx.strokeStyle = '#7dd3fc';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+          ctx.fillStyle = '#0369a1';
+          ctx.font = 'bold 14px "Noto Sans KR", sans-serif';
+          ctx.fillText('테이블', cx, cy + 5);
+          var count = getRoundSeats();
+          var seatR = 190;
+          for (var i = 0; i < count; i++) {
+            var angle = (2 * Math.PI * i / count) - Math.PI / 2;
+            var x = cx + seatR * Math.cos(angle);
+            var y = cy + seatR * Math.sin(angle);
+            var name = state.shuffled[i];
+            ctx.beginPath();
+            ctx.arc(x, y, 28, 0, Math.PI * 2);
+            if (name) {
+              ctx.fillStyle = '#f0f9ff';
+              ctx.fill();
+              ctx.strokeStyle = '#bae6fd';
+              ctx.lineWidth = 2;
+              ctx.stroke();
+              ctx.fillStyle = '#0c4a6e';
+              ctx.font = 'bold 11px "Noto Sans KR", sans-serif';
+              ctx.fillText(name.length > 4 ? name.substring(0, 4) : name, x, y + 4);
+            } else {
+              ctx.setLineDash([4, 3]);
+              ctx.strokeStyle = '#cbd5e1';
+              ctx.lineWidth = 1.5;
+              ctx.stroke();
+              ctx.setLineDash([]);
+              ctx.fillStyle = '#cbd5e1';
+              ctx.font = '10px "Noto Sans KR", sans-serif';
+              ctx.fillText(String(i + 1), x, y + 4);
+            }
+          }
+        } else {
+          var cellW = 90, cellH = 50, padX = 40, padY = 90;
+          var gridW = state.cols * cellW;
+          var gridH = state.rows * cellH;
+          canvas.width = gridW + padX * 2;
+          canvas.height = gridH + padY + 60;
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#0f172a';
+          ctx.font = 'bold 18px "Noto Sans KR", sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('자리 배치 (' + state.cols + '\u00D7' + state.rows + ')', canvas.width / 2, 35);
+          ctx.fillStyle = '#92400e';
+          ctx.font = 'bold 12px "Noto Sans KR", sans-serif';
+          ctx.fillText('\u25B2 앞 (교사/발표자)', canvas.width / 2, 60);
+          for (var r = 0; r < state.rows; r++) {
+            for (var c = 0; c < state.cols; c++) {
+              var idx = r * state.cols + c;
+              var x = padX + c * cellW;
+              var y = padY + r * cellH;
+              var name = state.shuffled[idx];
+              ctx.beginPath();
+              rRect(ctx, x + 2, y + 2, cellW - 4, cellH - 4, 8);
+              if (name) {
+                ctx.fillStyle = '#f0f9ff';
+                ctx.fill();
+                ctx.strokeStyle = '#bae6fd';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                ctx.fillStyle = '#0c4a6e';
+                ctx.font = 'bold 12px "Noto Sans KR", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(name.length > 5 ? name.substring(0, 5) : name, x + cellW / 2, y + cellH / 2 + 4);
+                ctx.fillStyle = '#7dd3fc';
+                ctx.font = '8px "Noto Sans KR", sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(String(idx + 1), x + 6, y + 14);
+              } else {
+                ctx.setLineDash([4, 3]);
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = '#cbd5e1';
+                ctx.font = '10px "Noto Sans KR", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(String(idx + 1) + '번', x + cellW / 2, y + cellH / 2 + 4);
+              }
+            }
+          }
+        }
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '10px "Noto Sans KR", sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(new Date().toLocaleString('ko-KR'), canvas.width - 15, canvas.height - 15);
+        ctx.fillText('Neoflows 자리 뽑기', canvas.width - 15, canvas.height - 30);
+
+        var link = document.createElement('a');
+        link.download = '자리배치_' + new Date().toISOString().slice(0, 10) + '.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('이미지가 저장되었습니다! \uD83D\uDCF8');
+      }
+
+      function rRect(ctx, x, y, w, h, r) {
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+      }
+
+      /* ---------- Dark Mode Overrides ---------- */
+      function setupDark() {
+        var style = document.getElementById('nfDarkOverrides');
+        if (!style) return;
+
+        function update() {
+          var dk = document.body.classList.contains('dark');
+          style.textContent = dk ? [
+            '.sp-preset-btn { background: #0f172a !important; border-color: #334155 !important; color: #94a3b8 !important; }',
+            '.sp-preset-btn:hover { border-color: #0284c7 !important; color: #38bdf8 !important; background: #1e293b !important; }',
+            '.sp-preset-btn.active { background: linear-gradient(135deg,#0284c7,#0ea5e9) !important; color: white !important; border-color: transparent !important; }',
+            '.sp-names, .sp-row-num, .sp-modal-ta { background: #0f172a !important; border-color: #1e293b !important; color: #e2e8f0 !important; }',
+            '.sp-names:focus, .sp-row-num:focus { border-color: #0284c7 !important; box-shadow: 0 0 0 3px rgba(2,132,199,0.15) !important; }',
+            '.sp-col-btn { background: #0f172a !important; border-color: #334155 !important; color: #94a3b8 !important; }',
+            '.sp-col-btn:hover { border-color: #0284c7 !important; color: #38bdf8 !important; }',
+            '.sp-col-btn.active { background: #0284c7 !important; color: white !important; border-color: transparent !important; }',
+            '.sp-seat.filled { background: linear-gradient(135deg,#0c4a6e,#0369a1) !important; border-color: #0284c7 !important; color: #e0f2fe !important; }',
+            '.sp-seat.filled:hover { box-shadow: 0 4px 12px rgba(2,132,199,0.25) !important; }',
+            '.sp-seat-num { color: #7dd3fc !important; }',
+            '.sp-seat.empty { border-color: #334155 !important; color: #334155 !important; }',
+            '.sp-round-seat.filled { background: linear-gradient(135deg,#0c4a6e,#0369a1) !important; border-color: #0284c7 !important; color: #e0f2fe !important; }',
+            '.sp-round-seat.empty { border-color: #334155 !important; color: #334155 !important; }',
+            '.sp-round-table { background: linear-gradient(135deg,#0c4a6e,#0369a1) !important; border-color: #0284c7 !important; }',
+            '.sp-round-table-text { color: #e0f2fe !important; }',
+            '.sp-podium { background: linear-gradient(135deg,#422006,#78350f) !important; border-color: #92400e !important; }',
+            '.sp-podium-icon { color: #fbbf24 !important; }',
+            '.sp-podium-title { color: #fde68a !important; }',
+            '.sp-podium-sub { color: #fcd34d !important; }',
+            '.sp-export-btn { background: #0f172a !important; border-color: #334155 !important; color: #94a3b8 !important; }',
+            '.sp-export-btn:hover { border-color: #0284c7 !important; color: #38bdf8 !important; background: #1e293b !important; }',
+            '.sp-chip { background: rgba(2,132,199,0.15) !important; border-color: rgba(2,132,199,0.3) !important; color: #38bdf8 !important; }',
+            '.sp-hist-item { background: #0f172a !important; border-color: #1e293b !important; color: #94a3b8 !important; }',
+            '.sp-hist-item:hover { background: #1e293b !important; border-color: #0284c7 !important; }',
+            '.sp-hist-time { color: #475569 !important; }',
+            '.sp-section-label { color: #64748b !important; }',
+            '.sp-row-row label { color: #94a3b8 !important; }',
+            '.sp-total-hint { color: #475569 !important; }',
+            '.sp-total-hint b { color: #38bdf8 !important; }',
+            '.sp-name-count { color: #475569 !important; }',
+            '.sp-name-count b { color: #38bdf8 !important; }',
+            '.sp-modal-box { background: #0f172a !important; }',
+            '.sp-modal-box h3 { color: #f8fafc !important; }',
+            '.sp-empty svg { color: #334155 !important; }',
+            '.sp-empty p { color: #475569 !important; }',
+            '.sp-empty span { color: #334155 !important; }',
+            '.sp-history::-webkit-scrollbar-thumb { background: #334155 !important; }',
+            '.nf-card { background: #0f172a !important; border-color: #1e293b !important; }',
+            'h1, h2, h3, .nf-text-primary { color: #f8fafc !important; }',
+            '.nf-text-secondary { color: #94a3b8 !important; }',
+            '.nf-text-muted { color: #64748b !important; }',
+            '.nf-input, .nf-textarea, input, textarea, select { background: #0f172a !important; border-color: #1e293b !important; color: #e2e8f0 !important; }',
+            '.nf-bg-subtle { background: #1e293b !important; }',
+            '.nf-border-subtle { border-color: #1e293b !important; }',
+            '.nf-stat-card { background: rgba(30,41,59,0.5) !important; border-color: #334155 !important; }'
+          ].join('\n') : '';
+        }
+
+        update();
+        var obs = new MutationObserver(update);
+        obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+      }
+
+      /* ---------- Init ---------- */
+      render();
+      setupDark();
+
+    })();
+  </script>
+</body>
+</html>

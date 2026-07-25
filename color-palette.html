@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSS 그라디언트 생성기 (배경 색상 조합) | Neoflows Tools</title>
+  <meta name="description" content="아름다운 CSS 그라디언트를 쉽게 생성하세요. 선형/원형 그라디언트, 각도 조절, 프리셋 갤러리, CSS 코드 복사 기능을 제공합니다.">
+  <!-- Google Fonts (Noto Sans KR) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Shared Styles -->
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    /* ======================================== */
+    /*  CSS Gradient Generator Page Styles      */
+    /*  Theme: PINK (#db2777)                   */
+    /* ======================================== */
+
+    /* Gradient Preview */
+    .gp-preview-wrap {
+      border-radius: 1.5rem;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(219, 39, 119, 0.15);
+      position: relative;
+      transition: box-shadow 0.3s;
+    }
+    .gp-preview-wrap:hover {
+      box-shadow: 0 12px 40px rgba(219, 39, 119, 0.25);
+    }
+    .gp-preview {
+      width: 100%;
+      height: 320px;
+      border-radius: 1.5rem;
+      transition: background 0.4s ease;
+      position: relative;
+    }
+    @media (min-width: 768px) {
+      .gp-preview { height: 380px; }
+    }
+    .gp-preview-overlay {
+      position: absolute;
+      bottom: 1rem;
+      right: 1rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* Color Pickers */
+    .gp-color-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.625rem 0;
+    }
+    .gp-color-swatch {
+      position: relative;
+      width: 2.75rem;
+      height: 2.75rem;
+      border-radius: 0.75rem;
+      overflow: hidden;
+      border: 2px solid #e2e8f0;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: border-color 0.2s, transform 0.15s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .gp-color-swatch:hover {
+      transform: scale(1.08);
+      border-color: #db2777;
+    }
+    body.dark .gp-color-swatch { border-color: #334155; }
+    body.dark .gp-color-swatch:hover { border-color: #db2777; }
+    .gp-color-swatch input[type="color"] {
+      position: absolute;
+      top: -8px;
+      left: -8px;
+      width: calc(100% + 16px);
+      height: calc(100% + 16px);
+      border: none;
+      cursor: pointer;
+      background: none;
+    }
+    .gp-color-swatch input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    .gp-color-swatch input[type="color"]::-webkit-color-swatch { border: none; border-radius: 0; }
+    .gp-color-swatch input[type="color"]::-moz-color-swatch { border: none; }
+    .gp-color-hex {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.625rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      font-weight: 600;
+      background: #f8fafc;
+      color: #334155;
+      text-transform: uppercase;
+      outline: none;
+      transition: all 0.15s;
+    }
+    .gp-color-hex:focus {
+      border-color: #db2777;
+      box-shadow: 0 0 0 3px rgba(219,39,119,0.12);
+    }
+    body.dark .gp-color-hex {
+      background: #0f172a;
+      border-color: #1e293b;
+      color: #e2e8f0;
+    }
+
+    /* Gradient Type Selector */
+    .gp-type-toggle {
+      display: inline-flex;
+      background: #f1f5f9;
+      border-radius: 0.75rem;
+      padding: 0.25rem;
+      gap: 0.25rem;
+    }
+    body.dark .gp-type-toggle { background: #1e293b; }
+    .gp-type-btn {
+      padding: 0.5rem 1.25rem;
+      border-radius: 0.625rem;
+      border: none;
+      font-family: inherit;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: #64748b;
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .gp-type-btn.active {
+      background: linear-gradient(135deg, #db2777, #ec4899);
+      color: white;
+      box-shadow: 0 2px 8px rgba(219,39,119,0.3);
+    }
+    body.dark .gp-type-btn { color: #94a3b8; }
+    body.dark .gp-type-btn.active { color: white; }
+
+    /* Angle Slider */
+    .gp-angle-section {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 0.35s ease, opacity 0.25s ease, margin 0.3s;
+      margin-top: 0;
+    }
+    .gp-angle-section.visible {
+      max-height: 200px;
+      opacity: 1;
+      margin-top: 1rem;
+    }
+    .gp-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 0.5rem;
+      border-radius: 9999px;
+      background: #e2e8f0;
+      outline: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    body.dark .gp-slider { background: #334155; }
+    .gp-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 1.375rem;
+      height: 1.375rem;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #db2777, #ec4899);
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(219,39,119,0.4);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .gp-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      box-shadow: 0 3px 12px rgba(219,39,119,0.5);
+    }
+    .gp-slider::-moz-range-thumb {
+      width: 1.375rem;
+      height: 1.375rem;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #db2777, #ec4899);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 8px rgba(219,39,119,0.4);
+    }
+    .gp-angle-display {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 4.5rem;
+      padding: 0.375rem 0.75rem;
+      background: linear-gradient(135deg, #db2777, #ec4899);
+      color: white;
+      border-radius: 0.625rem;
+      font-size: 1rem;
+      font-weight: 800;
+      box-shadow: 0 2px 8px rgba(219,39,119,0.3);
+    }
+
+    /* Direction Presets */
+    .gp-dir-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .gp-dir-btn {
+      padding: 0.375rem 0.875rem;
+      border-radius: 0.625rem;
+      border: 1px solid #e2e8f0;
+      background: white;
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .gp-dir-btn:hover {
+      border-color: #db2777;
+      color: #db2777;
+      background: #fdf2f8;
+    }
+    .gp-dir-btn.active {
+      border-color: #db2777;
+      background: #fdf2f8;
+      color: #db2777;
+      box-shadow: 0 2px 8px rgba(219,39,119,0.15);
+    }
+    body.dark .gp-dir-btn {
+      background: #0f172a;
+      border-color: #1e293b;
+      color: #94a3b8;
+    }
+    body.dark .gp-dir-btn:hover,
+    body.dark .gp-dir-btn.active {
+      border-color: #db2777;
+      color: #ec4899;
+      background: rgba(219,39,119,0.1);
+    }
+
+    /* Action Buttons */
+    .gp-action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      border-radius: 0.75rem;
+      font-family: inherit;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+    }
+    .gp-action-btn:active { transform: scale(0.97); }
+    .gp-action-primary {
+      background: linear-gradient(135deg, #db2777, #ec4899);
+      color: white;
+      box-shadow: 0 4px 14px rgba(219,39,119,0.3);
+    }
+    .gp-action-primary:hover {
+      box-shadow: 0 6px 20px rgba(219,39,119,0.4);
+      filter: brightness(1.05);
+    }
+    .gp-action-secondary {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+    }
+    .gp-action-secondary:hover {
+      background: #e2e8f0;
+    }
+    body.dark .gp-action-secondary {
+      background: #1e293b;
+      color: #94a3b8;
+      border-color: #334155;
+    }
+    body.dark .gp-action-secondary:hover {
+      background: #334155;
+    }
+
+    /* Code Output */
+    .gp-code-box {
+      background: #0f172a;
+      border-radius: 1rem;
+      padding: 1.25rem;
+      font-family: 'Courier New', 'Fira Code', monospace;
+      font-size: 0.8125rem;
+      line-height: 1.7;
+      color: #e2e8f0;
+      overflow-x: auto;
+      position: relative;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    body.dark .gp-code-box {
+      background: #020617;
+      border: 1px solid #1e293b;
+    }
+    .gp-code-box .gp-code-prop { color: #7dd3fc; }
+    .gp-code-box .gp-code-val { color: #86efac; }
+    .gp-code-copy-btn {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.5rem;
+      background: rgba(255,255,255,0.1);
+      color: #94a3b8;
+      border: 1px solid rgba(255,255,255,0.1);
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+    .gp-code-copy-btn:hover {
+      background: rgba(219,39,119,0.8);
+      color: white;
+      border-color: transparent;
+    }
+
+    /* Preset Gallery */
+    .gp-preset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.75rem;
+    }
+    @media (min-width: 768px) {
+      .gp-preset-grid { grid-template-columns: repeat(5, 1fr); }
+    }
+    .gp-preset-item {
+      height: 80px;
+      border-radius: 1rem;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      position: relative;
+      overflow: hidden;
+    }
+    .gp-preset-item:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    .gp-preset-item:active {
+      transform: translateY(0) scale(0.98);
+    }
+    .gp-preset-label {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 0.375rem 0.5rem;
+      background: linear-gradient(transparent, rgba(0,0,0,0.55));
+      color: white;
+      font-size: 0.625rem;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: 0.02em;
+    }
+
+    /* Section Labels */
+    .gp-section-label {
+      font-size: 0.8125rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .gp-section-label .gp-label-dot {
+      width: 0.375rem;
+      height: 0.375rem;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #db2777, #ec4899);
+      flex-shrink: 0;
+    }
+    body.dark .gp-section-label { color: #f1f5f9; }
+
+    /* Swap Button */
+    .gp-swap-btn {
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 50%;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      color: #64748b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .gp-swap-btn:hover {
+      background: #fdf2f8;
+      border-color: #db2777;
+      color: #db2777;
+      transform: rotate(180deg);
+    }
+    body.dark .gp-swap-btn {
+      background: #1e293b;
+      border-color: #334155;
+      color: #94a3b8;
+    }
+    body.dark .gp-swap-btn:hover {
+      border-color: #db2777;
+      color: #ec4899;
+      background: rgba(219,39,119,0.1);
+    }
+
+    /* Fullscreen preview button on preview */
+    .gp-fs-btn {
+      padding: 0.5rem;
+      border-radius: 0.625rem;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .gp-fs-btn:hover {
+      background: rgba(255,255,255,0.35);
+      transform: scale(1.08);
+    }
+
+    /* Divider */
+    .gp-divider {
+      height: 1px;
+      background: #f1f5f9;
+      margin: 1rem 0;
+    }
+    body.dark .gp-divider { background: #1e293b; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script src="js/common.js"></script>
+  <script>
+    /* ======================================== */
+    /*  CSS Gradient Generator - App Logic      */
+    /* ======================================== */
+
+    // ---- State ----
+    const state = {
+      color1: '#db2777',
+      color2: '#f97316',
+      type: 'linear',   // 'linear' | 'radial'
+      angle: 135,
+    };
+
+    // ---- Presets ----
+    const PRESETS = [
+      { name: '선셋 글로우',   c1: '#f97316', c2: '#db2777', type: 'linear', angle: 135 },
+      { name: '오션 드림',   c1: '#0ea5e9', c2: '#06b6d4', type: 'linear', angle: 135 },
+      { name: '라벤더 필드', c1: '#a855f7', c2: '#ec4899', type: 'linear', angle: 135 },
+      { name: '에메랄드 숲', c1: '#059669', c2: '#84cc16', type: 'linear', angle: 160 },
+      { name: '미드나잇 블루', c1: '#1e1b4b', c2: '#3b82f6', type: 'linear', angle: 180 },
+      { name: '피치 코랄',   c1: '#fb923c', c2: '#f472b6', type: 'radial', angle: 0 },
+      { name: '노던 오로라', c1: '#06b6d4', c2: '#a855f7', type: 'linear', angle: 45 },
+      { name: '로즈 골드',   c1: '#f43f5e', c2: '#fbbf24', type: 'linear', angle: 135 },
+      { name: '딥 스페이스', c1: '#0f172a', c2: '#7c3aed', type: 'radial', angle: 0 },
+      { name: '체리 블라썸', c1: '#fda4af', c2: '#e11d48', type: 'linear', angle: 180 },
+    ];
+
+    // ---- Direction Presets (keyword -> angle mapping) ----
+    const DIR_PRESETS = [
+      { label: '\u2192 \uc624\ub978\ucabd',     keyword: 'to right',       angle: 90 },
+      { label: '\u2193 \uc544\ub798',       keyword: 'to bottom',      angle: 180 },
+      { label: '\u2198 \uc6b0\ucabd \ud558\ub2e8',  keyword: 'to bottom right', angle: 135 },
+      { label: '45\u00b0',          keyword: null,              angle: 45 },
+      { label: '135\u00b0',         keyword: null,              angle: 135 },
+    ];
+
+    // ---- Helpers ----
+    function getGradientCSS() {
+      if (state.type === 'radial') {
+        return 'radial-gradient(circle, ' + state.color1 + ', ' + state.color2 + ')';
+      }
+      const activeDir = DIR_PRESETS.find(function(d) { return d.angle === state.angle && d.keyword; });
+      if (activeDir) {
+        return 'linear-gradient(' + activeDir.keyword + ', ' + state.color1 + ', ' + state.color2 + ')';
+      }
+      return 'linear-gradient(' + state.angle + 'deg, ' + state.color1 + ', ' + state.color2 + ')';
+    }
+
+    function getCSSCodeBlock() {
+      return 'background: ' + getGradientCSS() + ';';
+    }
+
+    function randomHex() {
+      return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+    }
+
+    // ---- Render ----
+    function render() {
+      const app = document.getElementById('app');
+      const grad = getGradientCSS();
+      const isLinear = state.type === 'linear';
+
+      let dirBtnsHTML = '';
+      for (let i = 0; i < DIR_PRESETS.length; i++) {
+        const d = DIR_PRESETS[i];
+        const activeClass = (state.angle === d.angle) ? ' active' : '';
+        dirBtnsHTML += '<button class="gp-dir-btn' + activeClass + '" onclick="setAngle(' + d.angle + ')">' + d.label + '</button>';
+      }
+
+      let presetItemsHTML = '';
+      for (let i = 0; i < PRESETS.length; i++) {
+        const p = PRESETS[i];
+        const pGrad = p.type === 'radial'
+          ? 'radial-gradient(circle, ' + p.c1 + ', ' + p.c2 + ')'
+          : 'linear-gradient(' + p.angle + 'deg, ' + p.c1 + ', ' + p.c2 + ')';
+        presetItemsHTML += '<div class="gp-preset-item" style="background: ' + pGrad + ';" onclick="applyPreset(' + i + ')" title="' + p.name + '"><div class="gp-preset-label">' + p.name + '</div></div>';
+      }
+
+      app.innerHTML = ''
+        + toolHeaderHTML('CSS \uadf8\ub77c\ub514\uc5b8\ud2b8 \uc0dd\uc131\uae30', '\uc544\ub984\ub2e4\uc6b4 \ubc30\uacbd \uc0c9\uc0c1 \uadf8\ub77c\ub514\uc5b8\ud2b8 \uc870\ud569\uc744 \uc0dd\uc131\ud558\uace0 \ucf54\ub4dc\ub97c \ubcf5\uc0ac\ud558\uc138\uc694.')
+        + '<main style="min-height: calc(100vh - 140px);">'
+        + '<div class="nf-container" style="padding-top:1.5rem; padding-bottom:2.5rem;">'
+
+        // Preview
+        + '<div class="nf-card stagger-hidden animate-fade-in-up" style="padding:0; overflow:hidden; margin-bottom:1.5rem;">'
+        + '  <div class="gp-preview-wrap">'
+        + '    <div class="gp-preview" id="gpPreview" style="background: ' + grad + ';">'
+        + '      <div class="gp-preview-overlay">'
+        + '        <button class="gp-fs-btn" onclick="openFullscreen()" aria-label="\uc804\uccb4\ud654\uba74 \ubbf8\ub9ac\ubcf4\uae30">'
+        + '          <svg style="width:1.125rem;height:1.125rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>'
+        + '        </button>'
+        + '      </div>'
+        + '    </div>'
+        + '  </div>'
+        + '</div>'
+
+        + '<div style="display:flex; flex-direction:column; gap:1.5rem;">'
+
+        // Controls Card
+        + '<div class="nf-card stagger-hidden animate-fade-in-up delay-1">'
+        + '  <div class="gp-section-label"><span class="gp-label-dot"></span> \uc0c9\uc0c1 \ubc0f \ud0c0\uc785</div>'
+
+        // Color row
+        + '  <div style="display:flex; align-items:flex-end; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap;">'
+        + '    <div style="flex:1; min-width:140px;">'
+        + '      <div style="font-size:0.6875rem; font-weight:600; color:#94a3b8; margin-bottom:0.375rem; text-transform:uppercase; letter-spacing:0.05em;">\uc2dc\uc791 \uc0c9\uc0c1</div>'
+        + '      <div class="gp-color-row" style="padding:0;">'
+        + '        <div class="gp-color-swatch" style="border-color:' + state.color1 + ';">'
+        + '          <input type="color" value="' + state.color1 + '" id="color1Picker" onchange="handleColor1(this.value)" oninput="handleColor1(this.value)">'
+        + '        </div>'
+        + '        <input type="text" class="gp-color-hex" value="' + state.color1.toUpperCase() + '" id="color1Hex" onchange="handleColor1Hex(this.value)" maxlength="7">'
+        + '      </div>'
+        + '    </div>'
+
+        + '    <button class="gp-swap-btn" onclick="swapColors()" aria-label="\uc0c9\uc0c1 \uad50\ud658">'
+        + '      <svg style="width:1rem;height:1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>'
+        + '    </button>'
+
+        + '    <div style="flex:1; min-width:140px;">'
+        + '      <div style="font-size:0.6875rem; font-weight:600; color:#94a3b8; margin-bottom:0.375rem; text-transform:uppercase; letter-spacing:0.05em;">\uc885\ub8cc \uc0c9\uc0c1</div>'
+        + '      <div class="gp-color-row" style="padding:0;">'
+        + '        <div class="gp-color-swatch" style="border-color:' + state.color2 + ';">'
+        + '          <input type="color" value="' + state.color2 + '" id="color2Picker" onchange="handleColor2(this.value)" oninput="handleColor2(this.value)">'
+        + '        </div>'
+        + '        <input type="text" class="gp-color-hex" value="' + state.color2.toUpperCase() + '" id="color2Hex" onchange="handleColor2Hex(this.value)" maxlength="7">'
+        + '      </div>'
+        + '    </div>'
+        + '  </div>'
+
+        + '  <div class="gp-divider"></div>'
+
+        // Type toggle + random button
+        + '  <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">'
+        + '    <div class="gp-type-toggle">'
+        + '      <button class="gp-type-btn' + (isLinear ? ' active' : '') + '" onclick="setType(\'linear\')">'
+        + '        <svg style="width:0.875rem;height:0.875rem;display:inline;vertical-align:middle;margin-right:0.25rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg>'
+        + '        \uc120\ud615'
+        + '      </button>'
+        + '      <button class="gp-type-btn' + (!isLinear ? ' active' : '') + '" onclick="setType(\'radial\')">'
+        + '        <svg style="width:0.875rem;height:0.875rem;display:inline;vertical-align:middle;margin-right:0.25rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke-width="2"/></svg>'
+        + '        \uc6d0\ud615'
+        + '      </button>'
+        + '    </div>'
+        + '    <button class="gp-action-btn gp-action-primary" onclick="randomGradient()">'
+        + '      <svg style="width:1rem;height:1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>'
+        + '      \ub79c\ub364 \uadf8\ub77c\ub514\uc5b8\ud2b8'
+        + '    </button>'
+        + '  </div>'
+
+        // Angle section
+        + '  <div class="gp-angle-section' + (isLinear ? ' visible' : '') + '" id="angleSection">'
+        + '    <div class="gp-divider" style="margin-top:0.75rem;"></div>'
+        + '    <div class="gp-section-label" style="margin-top:0.5rem;"><span class="gp-label-dot"></span> \uac01\ub3c4 \ubc0f \ubc29\ud5a5</div>'
+        + '    <div style="display:flex; align-items:center; gap:1rem; margin-bottom:0.75rem;">'
+        + '      <input type="range" class="gp-slider" min="0" max="360" value="' + state.angle + '" id="angleSlider" oninput="handleAngle(this.value)">'
+        + '      <span class="gp-angle-display" id="angleDisplay">' + state.angle + '\u00b0</span>'
+        + '    </div>'
+        + '    <div class="gp-dir-grid">' + dirBtnsHTML + '</div>'
+        + '  </div>'
+        + '</div>'
+
+        // CSS Code Output
+        + '<div class="nf-card stagger-hidden animate-fade-in-up delay-2">'
+        + '  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">'
+        + '    <div class="gp-section-label" style="margin-bottom:0;"><span class="gp-label-dot"></span> CSS \ucf54\ub4dc</div>'
+        + '    <button class="gp-action-btn gp-action-secondary" onclick="copyCSS()">'
+        + '      <svg style="width:0.875rem;height:0.875rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>'
+        + '      \ubcf5\uc0ac'
+        + '    </button>'
+        + '  </div>'
+        + '  <div class="gp-code-box" id="codeBox">'
+        + '    <span class="gp-code-prop">background</span>: <span class="gp-code-val">' + grad + '</span>;'  
+        + '  </div>'
+        + '</div>'
+
+        // Preset Gallery
+        + '<div class="nf-card stagger-hidden animate-fade-in-up delay-3">'
+        + '  <div class="gp-section-label"><span class="gp-label-dot"></span> \ud504\ub9ac\uc14b \uac24\ub7ec\ub9ac</div>'
+        + '  <div class="gp-preset-grid">' + presetItemsHTML + '</div>'
+        + '</div>'
+
+        + '</div>'
+        + '</div>'
+        + '</main>'
+        + toolFooterHTML();
+
+      // Re-init common after DOM update
+      commonInit();
+      darkObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+      updateBodyDarkStyles();
+    }
+
+    // ---- Handlers ----
+    function handleColor1(val) {
+      state.color1 = val;
+      updateLive();
+    }
+    function handleColor2(val) {
+      state.color2 = val;
+      updateLive();
+    }
+    function handleColor1Hex(val) {
+      if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+        state.color1 = val;
+        updateLive();
+      }
+    }
+    function handleColor2Hex(val) {
+      if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+        state.color2 = val;
+        updateLive();
+      }
+    }
+    function setType(type) {
+      state.type = type;
+      render();
+    }
+    function handleAngle(val) {
+      state.angle = parseInt(val, 10);
+      updateLive();
+    }
+    function setAngle(angle) {
+      state.angle = angle;
+      render();
+    }
+    function swapColors() {
+      var tmp = state.color1;
+      state.color1 = state.color2;
+      state.color2 = tmp;
+      render();
+    }
+    function randomGradient() {
+      state.color1 = randomHex();
+      state.color2 = randomHex();
+      state.angle = Math.floor(Math.random() * 360);
+      state.type = Math.random() > 0.25 ? 'linear' : 'radial';
+      render();
+      showToast('\ud83c\udfb2 \ub79c\ub364 \uadf8\ub77c\ub514\uc5b8\ud2b8 \uc0dd\uc131!');
+    }
+    function applyPreset(idx) {
+      var p = PRESETS[idx];
+      state.color1 = p.c1;
+      state.color2 = p.c2;
+      state.type = p.type;
+      state.angle = p.angle;
+      render();
+      showToast('"' + p.name + '" \ud504\ub9ac\uc14b \uc801\uc6a9\ub428');
+    }
+    function copyCSS() {
+      var code = getCSSCodeBlock();
+      copyToClipboard(code, 'CSS \ucf54\ub4dc\uac00 \ubcf5\uc0ac\ub418\uc5c8\uc2b5\ub2c8\ub2e4!');
+    }
+    function openFullscreen() {
+      var grad = getGradientCSS();
+      var win = window.open('', '_blank');
+      if (!win) {
+        showToast('\ud328\uc5c5\uc774 \ucc28\ub2e8\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \ud328\uc5c5\uc5c5 \ud5c8\uc6a9 \ud6c4 \ub2e4\uc2dc \uc2dc\ub3c4\ud558\uc138\uc694.');
+        return;
+      }
+      win.document.write('<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>\uadf8\ub77c\ub514\uc5b8\ud2b8 \uc804\uccb4\ud654\uba74 \ubbf8\ub9ac\ubcf4\uae30</title><style>*{margin:0;padding:0;box-sizing:border-box}body{width:100vw;height:100vh;background:' + grad + ';overflow:hidden}.close-hint{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.5);color:white;padding:0.75rem 1.5rem;border-radius:1rem;font-family:sans-serif;font-size:0.875rem;font-weight:600;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);pointer-events:none;animation:fadeHint 3s ease forwards}@keyframes fadeHint{0%,70%{opacity:1}100%{opacity:0}}</style></head><body><div class="close-hint">ESC \ud0a4 \ub610\ub294 \ube0c\ub77c\uc6b0\uc800 \ub2eb\uae30\ub85c \uc885\ub8cc</div></body></html>');
+      win.document.close();
+    }
+
+    // Lightweight update without full re-render (for sliders/pickers)
+    function updateLive() {
+      var grad = getGradientCSS();
+      var preview = document.getElementById('gpPreview');
+      if (preview) preview.style.background = grad;
+      var codeBox = document.getElementById('codeBox');
+      if (codeBox) {
+        codeBox.innerHTML = '<span class="gp-code-prop">background</span>: <span class="gp-code-val">' + grad + '</span>;';
+      }
+      var c1Hex = document.getElementById('color1Hex');
+      if (c1Hex) c1Hex.value = state.color1.toUpperCase();
+      var c2Hex = document.getElementById('color2Hex');
+      if (c2Hex) c2Hex.value = state.color2.toUpperCase();
+      var c1Picker = document.getElementById('color1Picker');
+      if (c1Picker) c1Picker.value = state.color1;
+      var c2Picker = document.getElementById('color2Picker');
+      if (c2Picker) c2Picker.value = state.color2;
+      var swatches = document.querySelectorAll('.gp-color-swatch');
+      if (swatches[0]) swatches[0].style.borderColor = state.color1;
+      if (swatches[1]) swatches[1].style.borderColor = state.color2;
+      var angleDisplay = document.getElementById('angleDisplay');
+      if (angleDisplay) angleDisplay.textContent = state.angle + '\u00b0';
+      document.querySelectorAll('.gp-dir-btn').forEach(function(btn) {
+        var match = btn.getAttribute('onclick').match(/\d+/);
+        var btnAngle = match ? parseInt(match[0], 10) : -1;
+        btn.classList.toggle('active', btnAngle === state.angle);
+      });
+    }
+
+    // ---- Init ----
+    document.addEventListener('DOMContentLoaded', function() {
+      render();
+    });
+  </script>
+
+  <!-- Dark mode page-specific overrides -->
+  <style id="nfDarkOverrides"></style>
+</body>
+</html>

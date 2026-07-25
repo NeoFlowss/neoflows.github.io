@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스톱워치 & 뽀모도로 타이머 - Neoflows Tools</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/common.css">
+<style id='nfDarkOverrides'></style>
+<style id='timerDarkOverrides'></style>
+<style>
+/* ---- Page-specific styles ---- */
+.nf-main { max-width: 720px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+/* Tab bar */
+.tab-bar { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+.tab-btn {
+  flex: 1; padding: 0.75rem 1rem; border: 2px solid #e2e8f0; border-radius: 1rem; background: white;
+  font-weight: 700; font-size: 0.9375rem; cursor: pointer; transition: all 0.2s; color: #64748b;
+  font-family: inherit;
+}
+.tab-btn:hover { border-color: #ea580c; color: #ea580c; }
+.tab-btn.active { background: linear-gradient(135deg, #ea580c, #f97316); color: white; border-color: transparent; box-shadow: 0 4px 14px rgba(234,88,12,0.3); }
+
+/* Tab panels */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ---- Stopwatch ---- */
+.sw-display {
+  text-align: center; padding: 2rem 1rem;
+  font-size: 3.5rem; font-weight: 900; letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums; color: #1e293b;
+}
+.sw-display .ms { font-size: 2rem; color: #ea580c; font-weight: 700; }
+
+.sw-btns { display: flex; justify-content: center; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.sw-btn {
+  padding: 0.75rem 1.75rem; border-radius: 0.875rem; border: none;
+  font-weight: 700; font-size: 0.9375rem; cursor: pointer; transition: all 0.2s;
+  font-family: inherit; display: flex; align-items: center; gap: 0.375rem;
+}
+.sw-btn:active { transform: scale(0.96); }
+.sw-btn-primary { background: linear-gradient(135deg, #ea580c, #f97316); color: white; box-shadow: 0 4px 14px rgba(234,88,12,0.3); }
+.sw-btn-primary:hover { box-shadow: 0 6px 20px rgba(234,88,12,0.4); }
+.sw-btn-secondary { background: #f1f5f9; color: #475569; }
+.sw-btn-secondary:hover { background: #e2e8f0; }
+
+/* Lap list */
+.lap-header { display: flex; justify-content: space-between; padding: 0.5rem 1rem; font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+.lap-list { max-height: 20rem; overflow-y: auto; border-radius: 1rem; border: 1px solid #e2e8f0; background: white; }
+.lap-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.625rem 1rem; border-bottom: 1px solid #f1f5f9; font-size: 0.875rem;
+  transition: background 0.15s; animation: slideIn 0.25s ease;
+}
+.lap-item:last-child { border-bottom: none; }
+.lap-item:hover { background: #f8fafc; }
+.lap-item.best .lap-split { color: #059669; font-weight: 700; }
+.lap-item.worst .lap-split { color: #dc2626; font-weight: 700; }
+.lap-item .lap-num { color: #94a3b8; font-weight: 500; min-width: 4.5rem; }
+.lap-item .lap-split { font-variant-numeric: tabular-nums; font-weight: 600; }
+.lap-item .lap-total { font-variant-numeric: tabular-nums; color: #64748b; }
+.lap-empty { text-align: center; padding: 2rem; color: #cbd5e1; font-size: 0.875rem; }
+@keyframes slideIn { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+
+/* ---- Pomodoro ---- */
+.pomo-center { display: flex; flex-direction: column; align-items: center; padding: 1rem 0; }
+
+/* Preset buttons */
+.pomo-presets { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; justify-content: center; }
+.preset-btn {
+  padding: 0.5rem 1rem; border-radius: 0.75rem; border: 2px solid #e2e8f0;
+  background: white; font-weight: 600; font-size: 0.8125rem; cursor: pointer;
+  transition: all 0.2s; font-family: inherit; color: #475569;
+}
+.preset-btn:hover { border-color: #ea580c; color: #ea580c; }
+.preset-btn.active { background: linear-gradient(135deg, #ea580c, #f97316); color: white; border-color: transparent; box-shadow: 0 4px 14px rgba(234,88,12,0.25); }
+
+/* Custom time input */
+.custom-time-row { display: none; align-items: center; gap: 0.5rem; margin-bottom: 1rem; justify-content: center; }
+.custom-time-row.show { display: flex; }
+.custom-time-input {
+  width: 4.5rem; padding: 0.5rem; border: 2px solid #e2e8f0; border-radius: 0.75rem;
+  text-align: center; font-size: 1rem; font-weight: 700; font-family: inherit; background: white; color: #1e293b;
+}
+.custom-time-input:focus { outline: none; border-color: #ea580c; box-shadow: 0 0 0 3px rgba(234,88,12,0.15); }
+.custom-time-label { font-size: 0.8125rem; color: #94a3b8; font-weight: 600; }
+.custom-time-apply {
+  padding: 0.5rem 1rem; border-radius: 0.75rem; border: none; background: linear-gradient(135deg, #ea580c, #f97316);
+  color: white; font-weight: 700; font-size: 0.8125rem; cursor: pointer; font-family: inherit;
+  transition: all 0.2s;
+}
+.custom-time-apply:hover { box-shadow: 0 4px 14px rgba(234,88,12,0.3); }
+
+/* SVG Circle Timer */
+.pomo-ring-wrap { position: relative; width: 260px; height: 260px; margin-bottom: 1.25rem; }
+@media (max-width: 400px) { .pomo-ring-wrap { width: 220px; height: 220px; } }
+.pomo-ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.pomo-ring-bg { fill: none; stroke: #f1f5f9; stroke-width: 8; }
+.pomo-ring-fg { fill: none; stroke: url(#pomoGrad); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.5s ease; }
+.pomo-ring-inner {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.pomo-time-display { font-size: 2.75rem; font-weight: 900; color: #1e293b; font-variant-numeric: tabular-nums; line-height: 1; }
+.pomo-session-label { font-size: 0.8125rem; color: #94a3b8; font-weight: 600; margin-top: 0.375rem; }
+
+/* Pomo action buttons */
+.pomo-btns { display: flex; justify-content: center; gap: 0.75rem; margin-bottom: 1.25rem; }
+
+/* Suggestion banner */
+.suggestion-banner {
+  display: none; align-items: center; gap: 0.75rem; padding: 0.875rem 1.25rem;
+  background: linear-gradient(135deg, rgba(234,88,12,0.08), rgba(249,115,22,0.08));
+  border: 1px solid rgba(234,88,12,0.2); border-radius: 1rem; margin-bottom: 1rem;
+  font-size: 0.875rem; color: #475569; font-weight: 500;
+}
+.suggestion-banner.show { display: flex; animation: fadeIn 0.4s ease; }
+.suggestion-banner svg { flex-shrink: 0; color: #ea580c; }
+.suggestion-apply {
+  margin-left: auto; padding: 0.375rem 0.875rem; border-radius: 0.625rem; border: none;
+  background: linear-gradient(135deg, #ea580c, #f97316); color: white;
+  font-weight: 700; font-size: 0.8125rem; cursor: pointer; font-family: inherit;
+  white-space: nowrap; transition: all 0.2s;
+}
+.suggestion-apply:hover { box-shadow: 0 4px 14px rgba(234,88,12,0.3); }
+
+/* Today stats */
+.today-stats { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+.today-stat {
+  display: flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1rem;
+  background: #f8fafc; border-radius: 0.875rem; border: 1px solid #e2e8f0;
+}
+.today-stat-icon { color: #ea580c; }
+.today-stat-label { font-size: 0.75rem; color: #94a3b8; font-weight: 600; }
+.today-stat-value { font-size: 1rem; font-weight: 800; color: #1e293b; font-variant-numeric: tabular-nums; }
+
+/* Pulse animation when timer is running */
+@keyframes pulseRing { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+.running .pomo-ring-fg { animation: pulseRing 2s ease-in-out infinite; }
+.running .sw-display { animation: pulseRing 2s ease-in-out infinite; }
+
+/* Timer done flash */
+@keyframes flashBorder { 0%, 100% { box-shadow: 0 0 0 0 rgba(234,88,12,0); } 50% { box-shadow: 0 0 0 8px rgba(234,88,12,0.2); } }
+.timer-done .pomo-ring-wrap { animation: flashBorder 1s ease 3; }
+
+/* ---- Dark Mode (page-specific) ---- */
+body.dark .tab-btn { background: #0f172a; border-color: #1e293b; color: #94a3b8; }
+body.dark .tab-btn:hover { border-color: #ea580c; color: #ea580c; }
+body.dark .sw-display { color: #f8fafc; }
+body.dark .sw-display .ms { color: #f97316; }
+body.dark .sw-btn-secondary { background: #1e293b; color: #94a3b8; }
+body.dark .sw-btn-secondary:hover { background: #334155; }
+body.dark .lap-list { background: #0f172a; border-color: #1e293b; }
+body.dark .lap-item { border-bottom-color: #1e293b; }
+body.dark .lap-item:hover { background: #1e293b; }
+body.dark .lap-item .lap-num { color: #64748b; }
+body.dark .lap-item .lap-total { color: #94a3b8; }
+body.dark .lap-item.best .lap-split { color: #34d399; }
+body.dark .lap-item.worst .lap-split { color: #f87171; }
+body.dark .lap-header { color: #64748b; }
+body.dark .lap-empty { color: #475569; }
+body.dark .preset-btn { background: #0f172a; border-color: #1e293b; color: #94a3b8; }
+body.dark .preset-btn:hover { border-color: #ea580c; color: #ea580c; }
+body.dark .custom-time-input { background: #0f172a; border-color: #1e293b; color: #f8fafc; }
+body.dark .pomo-ring-bg { stroke: #1e293b; }
+body.dark .pomo-time-display { color: #f8fafc; }
+body.dark .suggestion-banner { background: rgba(234,88,12,0.12); border-color: rgba(234,88,12,0.25); color: #cbd5e1; }
+body.dark .today-stat { background: #0f172a; border-color: #1e293b; }
+body.dark .today-stat-label { color: #64748b; }
+body.dark .today-stat-value { color: #f8fafc; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="js/common.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  // ========================
+  //  CONSTANTS
+  // ========================
+  const ORANGE = '#ea580c';
+  const ORANGE_LIGHT = '#f97316';
+  const STORAGE_FOCUS_KEY = 'nf_pomo_focus_today';
+  const MAX_LAPS = 50;
+
+  const PRESETS = [
+    { label: '25분 (집중)', minutes: 25, type: 'work' },
+    { label: '5분 (짧은 휴식)', minutes: 5, type: 'break' },
+    { label: '15분 (긴 휴식)', minutes: 15, type: 'break' },
+    { label: '직접 설정', minutes: 0, type: 'custom' },
+  ];
+
+  // ========================
+  //  STATE
+  // ========================
+  let activeTab = 'stopwatch';
+
+  // Stopwatch state
+  let swRunning = false;
+  let swStartTime = 0;
+  let swElapsed = 0;
+  let swAnimFrame = null;
+  let swLaps = [];
+  let swLastLapTime = 0;
+
+  // Pomodoro state
+  let pomoRunning = false;
+  let pomoEndTime = 0;
+  let pomoRemaining = 0;
+  let pomoTotalDuration = 25 * 60 * 1000;
+  let pomoInterval = null;
+  let pomoSessionCount = 0;
+  let pomoCurrentType = 'work';
+  let pomoSuggestion = null;
+
+  // ========================
+  //  UTILITY
+  // ========================
+  function formatSW(ms) {
+    var totalSec = Math.floor(ms / 1000);
+    var h = Math.floor(totalSec / 3600);
+    var m = Math.floor((totalSec % 3600) / 60);
+    var s = totalSec % 60;
+    var centisec = Math.floor((ms % 1000) / 10);
+    var pad = function(n) { return String(n).padStart(2, '0'); };
+    return {
+      main: h > 0 ? (pad(h) + ':' + pad(m) + ':' + pad(s)) : (pad(m) + ':' + pad(s)),
+      ms: '.' + pad(centisec)
+    };
+  }
+
+  function fmtLap(ms) {
+    var t = Math.floor(ms / 1000);
+    var h = Math.floor(t / 3600);
+    var m = Math.floor((t % 3600) / 60);
+    var s = t % 60;
+    var c = Math.floor((ms % 1000) / 10);
+    var pad = function(n) { return String(n).padStart(2, '0'); };
+    if (h > 0) return pad(h) + ':' + pad(m) + ':' + pad(s) + '.' + pad(c);
+    return pad(m) + ':' + pad(s) + '.' + pad(c);
+  }
+
+  function getTodayKey() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function loadFocusData() {
+    try {
+      var raw = localStorage.getItem(STORAGE_FOCUS_KEY);
+      if (raw) {
+        var data = JSON.parse(raw);
+        if (data.date === getTodayKey()) return data;
+      }
+    } catch(e) {}
+    return { date: getTodayKey(), totalMS: 0, sessions: 0 };
+  }
+
+  function saveFocusData(data) {
+    localStorage.setItem(STORAGE_FOCUS_KEY, JSON.stringify(data));
+  }
+
+  // Web Audio API beep
+  function playBeep() {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var times = [0, 0.25, 0.5];
+      times.forEach(function(t) {
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 880;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.3, ctx.currentTime + t);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + t + 0.2);
+        osc.start(ctx.currentTime + t);
+        osc.stop(ctx.currentTime + t + 0.2);
+      });
+    } catch(e) {}
+  }
+
+  // ========================
+  //  STOPWATCH LOGIC
+  // ========================
+  function swTick() {
+    if (!swRunning) return;
+    var now = performance.now();
+    var current = swElapsed + (now - swStartTime);
+    updateSWDisplay(current);
+    swAnimFrame = requestAnimationFrame(swTick);
+  }
+
+  function updateSWDisplay(ms) {
+    var f = formatSW(ms);
+    document.getElementById('swTime').innerHTML = f.main + '<span class="ms">' + f.ms + '</span>';
+  }
+
+  function swStart() {
+    if (swRunning) return;
+    swRunning = true;
+    swStartTime = performance.now();
+    swTick();
+    updateSWButtons();
+    document.querySelector('.sw-display-card').classList.add('running');
+  }
+
+  function swPause() {
+    if (!swRunning) return;
+    swRunning = false;
+    swElapsed += performance.now() - swStartTime;
+    cancelAnimationFrame(swAnimFrame);
+    updateSWButtons();
+    document.querySelector('.sw-display-card').classList.remove('running');
+  }
+
+  function swReset() {
+    swPause();
+    swElapsed = 0;
+    swLastLapTime = 0;
+    swLaps = [];
+    updateSWDisplay(0);
+    renderLaps();
+  }
+
+  function swLap() {
+    if (!swRunning && swElapsed === 0) return;
+    var currentTotal = swRunning ? swElapsed + (performance.now() - swStartTime) : swElapsed;
+    var split = currentTotal - swLastLapTime;
+    swLaps.unshift({ split: split, total: currentTotal });
+    if (swLaps.length > MAX_LAPS) swLaps.pop();
+    swLastLapTime = currentTotal;
+    renderLaps();
+  }
+
+  function updateSWButtons() {
+    var startBtn = document.getElementById('swStartBtn');
+    var lapBtn = document.getElementById('swLapBtn');
+    if (swRunning) {
+      startBtn.innerHTML = '<svg style="width:1rem;height:1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 9v6m4-6v6"/></svg> 일시정지';
+      startBtn.onclick = swPause;
+      lapBtn.style.display = 'flex';
+    } else {
+      startBtn.innerHTML = '<svg style="width:1rem;height:1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> 시작';
+      startBtn.onclick = swStart;
+      lapBtn.style.display = swElapsed > 0 ? 'flex' : 'none';
+    }
+  }
+
+  function renderLaps() {
+    var container = document.getElementById('lapList');
+    if (swLaps.length === 0) {
+      container.innerHTML = '<div class="lap-empty">랩 기록이 없습니다</div>';
+      return;
+    }
+    var bestIdx = 0, worstIdx = 0;
+    if (swLaps.length > 1) {
+      var minSplit = Infinity, maxSplit = -Infinity;
+      swLaps.forEach(function(l, i) {
+        if (l.split < minSplit) { minSplit = l.split; bestIdx = i; }
+        if (l.split > maxSplit) { maxSplit = l.split; worstIdx = i; }
+      });
+    }
+    var html = '<div class="lap-header"><span>랩</span><span>구간</span><span>총시간</span></div>';
+    swLaps.forEach(function(l, i) {
+      var cls = i === bestIdx ? ' best' : (i === worstIdx ? ' worst' : '');
+      var badge = swLaps.length > 1 ? (i === bestIdx ? ' 🏆' : (i === worstIdx ? ' 🐢' : '')) : '';
+      html += '<div class="lap-item' + cls + '">'
+        + '<span class="lap-num">랩 ' + (swLaps.length - i) + badge + '</span>'
+        + '<span class="lap-split">' + fmtLap(l.split) + '</span>'
+        + '<span class="lap-total">' + fmtLap(l.total) + '</span>'
+        + '</div>';
+    });
+    container.innerHTML = html;
+  }
+
+  // ========================
+  //  POMODORO LOGIC
+  // ========================
+  function pomoSetDuration(minutes, type, presetIdx) {
+    if (pomoRunning) return;
+    pomoTotalDuration = minutes * 60 * 1000;
+    pomoRemaining = pomoTotalDuration;
+    pomoCurrentType = type;
+    pomoSuggestion = null;
+
+    document.querySelectorAll('.preset-btn').forEach(function(b, i) {
+      b.classList.toggle('active', i === presetIdx);
+    });
+
+    var customRow = document.getElementById('customTimeRow');
+    customRow.classList.toggle('show', type === 'custom');
+
+    updateSessionLabel();
+    updatePomoDisplay();
+    updateSuggestionBanner();
+    document.querySelector('.pomo-timer-card').classList.remove('timer-done');
+  }
+
+  function pomoApplyCustom() {
+    var minInput = document.getElementById('customMin');
+    var secInput = document.getElementById('customSec');
+    var mins = parseInt(minInput.value) || 0;
+    var secs = parseInt(secInput.value) || 0;
+    var totalSecs = mins * 60 + secs;
+    if (totalSecs < 1) {
+      showToast('1초 이상을 입력해주세요');
+      return;
+    }
+    if (totalSecs > 5999) {
+      showToast('99분 59초 이하로 설정해주세요');
+      return;
+    }
+    pomoTotalDuration = totalSecs * 1000;
+    pomoRemaining = pomoTotalDuration;
+    pomoUpdateRing();
+    updatePomoDisplay();
+  }
+
+  function pomoStart() {
+    if (pomoRunning) return;
+    if (pomoRemaining <= 0) {
+      pomoRemaining = pomoTotalDuration;
+    }
+    pomoRunning = true;
+    pomoEndTime = Date.now() + pomoRemaining;
+    pomoSuggestion = null;
+    updateSuggestionBanner();
+    document.querySelector('.pomo-timer-card').classList.add('running');
+    document.querySelector('.pomo-timer-card').classList.remove('timer-done');
+
+    pomoInterval = setInterval(function() {
+      pomoRemaining = pomoEndTime - Date.now();
+      if (pomoRemaining <= 0) {
+        pomoRemaining = 0;
+        pomoComplete();
+        return;
+      }
+      updatePomoDisplay();
+    }, 100);
+
+    updatePomoButtons();
+  }
+
+  function pomoPause() {
+    if (!pomoRunning) return;
+    pomoRunning = false;
+    clearInterval(pomoInterval);
+    document.querySelector('.pomo-timer-card').classList.remove('running');
+    updatePomoButtons();
+  }
+
+  function pomoReset() {
+    pomoPause();
+    pomoRemaining = pomoTotalDuration;
+    pomoSuggestion = null;
+    updateSuggestionBanner();
+    document.querySelector('.pomo-timer-card').classList.remove('timer-done');
+    updatePomoDisplay();
+    updatePomoButtons();
+  }
+
+  function pomoComplete() {
+    pomoPause();
+    playBeep();
+
+    if (pomoCurrentType === 'work') {
+      var data = loadFocusData();
+      data.totalMS += pomoTotalDuration;
+      data.sessions += 1;
+      saveFocusData(data);
+      pomoSessionCount = data.sessions;
+      updateTodayStats();
+      updateSessionLabel();
+      pomoSuggestion = { label: '짧은 휴식 시작하기', minutes: 5, type: 'break' };
+      showToast('\uD83C\uDFAF 집중 세션 완료! 휴식을 추천합니다.');
+    } else {
+      pomoSuggestion = { label: '집중 세션 시작하기', minutes: 25, type: 'work' };
+      showToast('\u2615 휴식 완료! 다시 집중할 시간입니다.');
+    }
+
+    document.querySelector('.pomo-timer-card').classList.add('timer-done');
+    updateSuggestionBanner();
+    updatePomoButtons();
+  }
+
+  function pomoApplySuggestion() {
+    if (!pomoSuggestion) return;
+    pomoTotalDuration = pomoSuggestion.minutes * 60 * 1000;
+    pomoRemaining = pomoTotalDuration;
+    pomoCurrentType = pomoSuggestion.type;
+    pomoSuggestion = null;
+    document.querySelectorAll('.preset-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.getElementById('customTimeRow').classList.remove('show');
+    updateSessionLabel();
+    updatePomoDisplay();
+    updateSuggestionBanner();
+  }
+
+  function updatePomoDisplay() {
+    var totalSec = Math.max(0, Math.ceil(pomoRemaining / 1000));
+    var m = Math.floor(totalSec / 60);
+    var s = totalSec % 60;
+    var pad = function(n) { return String(n).padStart(2, '0'); };
+    document.getElementById('pomoTimeDisplay').textContent = pad(m) + ':' + pad(s);
+    pomoUpdateRing();
+  }
+
+  function pomoUpdateRing() {
+    var ring = document.getElementById('pomoRingFg');
+    if (!ring) return;
+    var circumference = 2 * Math.PI * 115;
+    var progress = pomoTotalDuration > 0 ? pomoRemaining / pomoTotalDuration : 1;
+    var offset = circumference * (1 - progress);
+    ring.style.strokeDasharray = circumference;
+    ring.style.strokeDashoffset = offset;
+  }
+
+  function updatePomoButtons() {
+    var startBtn = document.getElementById('pomoStartBtn');
+    if (pomoRunning) {
+      startBtn.innerHTML = '<svg style="width:1rem;height:1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 9v6m4-6v6"/></svg> 일시정지';
+      startBtn.onclick = pomoPause;
+    } else {
+      var isDone = pomoRemaining <= 0;
+      startBtn.innerHTML = '<svg style="width:1rem;height:1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> ' + (isDone ? '재시작' : '시작');
+      startBtn.onclick = pomoStart;
+    }
+  }
+
+  function updateSessionLabel() {
+    var el = document.getElementById('pomoSessionLabel');
+    if (!el) return;
+    if (pomoCurrentType === 'work') {
+      el.textContent = '현재 세션: ' + (pomoSessionCount + 1) + '번째';
+    } else {
+      el.textContent = pomoTotalDuration === 15 * 60 * 1000 ? '긴 휴식' : '짧은 휴식';
+    }
+  }
+
+  function updateSuggestionBanner() {
+    var banner = document.getElementById('suggestionBanner');
+    if (!banner) return;
+    if (pomoSuggestion) {
+      banner.classList.add('show');
+      var textEl = banner.querySelector('.suggestion-text');
+      var btnEl = banner.querySelector('.suggestion-apply');
+      textEl.textContent = pomoSuggestion.type === 'break' ? '집중 세션이 끝났습니다. 휴식을 취해볼까요?' : '휴식이 끝났습니다. 다시 집중해볼까요?';
+      btnEl.textContent = pomoSuggestion.label;
+    } else {
+      banner.classList.remove('show');
+    }
+  }
+
+  function updateTodayStats() {
+    var data = loadFocusData();
+    var totalMins = Math.floor(data.totalMS / 60000);
+    var hours = Math.floor(totalMins / 60);
+    var mins = totalMins % 60;
+    var timeStr = hours > 0 ? (hours + '시간 ' + mins + '분') : (mins + '분');
+    var ftEl = document.getElementById('todayFocusTime');
+    var scEl = document.getElementById('todaySessionCount');
+    if (ftEl) ftEl.textContent = timeStr;
+    if (scEl) scEl.textContent = data.sessions + '회';
+  }
+
+  // ========================
+  //  TAB SWITCHING
+  // ========================
+  function switchTab(tab) {
+    activeTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.tab === tab);
+    });
+    document.querySelectorAll('.tab-panel').forEach(function(p) {
+      p.classList.toggle('active', p.id === tab + 'Panel');
+    });
+  }
+
+  // ========================
+  //  RENDER
+  // ========================
+  function render() {
+    var app = document.getElementById('app');
+    var presetsHTML = PRESETS.map(function(p, i) {
+      return '<button class="preset-btn' + (i === 0 ? ' active' : '') + '" data-preset-idx="' + i + '">' + p.label + '</button>';
+    }).join('');
+
+    app.innerHTML = toolHeaderHTML('스톱워치 & 뽀모도로 타이머', '공부 집중을 위한 뽀모도로 타이머 및 스톱워치.')
+
+      + '<main class="nf-main">'
+
+      // Tab Bar
+      + '<div class="tab-bar">'
+      + '<button class="tab-btn active" data-tab="stopwatch">'
+      + '<svg style="width:1rem;height:1rem;vertical-align:-2px;margin-right:4px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+      + '스톱워치</button>'
+      + '<button class="tab-btn" data-tab="pomodoro">'
+      + '<svg style="width:1rem;height:1rem;vertical-align:-2px;margin-right:4px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>'
+      + '뽀모도로 타이머</button>'
+      + '</div>'
+
+      // Stopwatch Panel
+      + '<div id="stopwatchPanel" class="tab-panel active">'
+      + '<div class="nf-card sw-display-card" style="margin-bottom:1.25rem;text-align:center;">'
+      + '<div class="sw-display" id="swTime">00:00<span class="ms">.00</span></div>'
+      + '</div>'
+      + '<div class="sw-btns">'
+      + '<button class="sw-btn sw-btn-primary" id="swStartBtn">'
+      + '<svg style="width:1rem;height:1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+      + ' 시작</button>'
+      + '<button class="sw-btn sw-btn-secondary" id="swLapBtn" style="display:none;">'
+      + '<svg style="width:1rem;height:1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>'
+      + ' 랩</button>'
+      + '<button class="sw-btn sw-btn-secondary" id="swResetBtn">'
+      + '<svg style="width:1rem;height:1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>'
+      + ' 초기화</button>'
+      + '</div>'
+      + '<div class="nf-card" style="padding:0;overflow:hidden;">'
+      + '<div class="lap-header"><span>랩</span><span>구간</span><span>총시간</span></div>'
+      + '<div class="lap-list" id="lapList">'
+      + '<div class="lap-empty">랩 기록이 없습니다</div>'
+      + '</div>'
+      + '</div>'
+      + '</div>'
+
+      // Pomodoro Panel
+      + '<div id="pomodoroPanel" class="tab-panel">'
+      + '<div class="nf-card pomo-timer-card">'
+      + '<div class="pomo-center">'
+
+      // Presets
+      + '<div class="pomo-presets">' + presetsHTML + '</div>'
+
+      // Custom time input
+      + '<div class="custom-time-row" id="customTimeRow">'
+      + '<input type="number" class="custom-time-input" id="customMin" min="0" max="99" value="0" placeholder="분" aria-label="분">'
+      + '<span class="custom-time-label">분</span>'
+      + '<input type="number" class="custom-time-input" id="customSec" min="0" max="59" value="0" placeholder="초" aria-label="초">'
+      + '<span class="custom-time-label">초</span>'
+      + '<button class="custom-time-apply" id="customApplyBtn">설정</button>'
+      + '</div>'
+
+      // SVG Ring
+      + '<div class="pomo-ring-wrap">'
+      + '<svg class="pomo-ring-svg" viewBox="0 0 260 260">'
+      + '<defs><linearGradient id="pomoGrad" x1="0%" y1="0%" x2="100%" y2="100%">'
+      + '<stop offset="0%" style="stop-color:' + ORANGE + ';stop-opacity:1" />'
+      + '<stop offset="100%" style="stop-color:' + ORANGE_LIGHT + ';stop-opacity:1" />'
+      + '</linearGradient></defs>'
+      + '<circle class="pomo-ring-bg" cx="130" cy="130" r="115" />'
+      + '<circle class="pomo-ring-fg" id="pomoRingFg" cx="130" cy="130" r="115" />'
+      + '</svg>'
+      + '<div class="pomo-ring-inner">'
+      + '<div class="pomo-time-display" id="pomoTimeDisplay">25:00</div>'
+      + '<div class="pomo-session-label" id="pomoSessionLabel">현재 세션: 1번째</div>'
+      + '</div>'
+      + '</div>'
+
+      // Action Buttons
+      + '<div class="pomo-btns">'
+      + '<button class="sw-btn sw-btn-primary" id="pomoStartBtn">'
+      + '<svg style="width:1rem;height:1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+      + ' 시작</button>'
+      + '<button class="sw-btn sw-btn-secondary" id="pomoResetBtn">'
+      + '<svg style="width:1rem;height:1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>'
+      + ' 초기화</button>'
+      + '</div>'
+
+      // Suggestion Banner
+      + '<div class="suggestion-banner" id="suggestionBanner">'
+      + '<svg style="width:1.25rem;height:1.25rem;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+      + '<span class="suggestion-text">휴식을 취해볼까요?</span>'
+      + '<button class="suggestion-apply" id="suggestionApplyBtn">짧은 휴식 시작하기</button>'
+      + '</div>'
+
+      // Today's Stats
+      + '<div class="today-stats">'
+      + '<div class="today-stat">'
+      + '<svg class="today-stat-icon" style="width:1.125rem;height:1.125rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+      + '<div><div class="today-stat-label">오늘 집중 시간</div>'
+      + '<div class="today-stat-value" id="todayFocusTime">0분</div></div>'
+      + '</div>'
+      + '<div class="today-stat">'
+      + '<svg class="today-stat-icon" style="width:1.125rem;height:1.125rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+      + '<div><div class="today-stat-label">완료한 세션</div>'
+      + '<div class="today-stat-value" id="todaySessionCount">0회</div></div>'
+      + '</div>'
+      + '</div>'
+
+      + '</div></div></div>'
+      + '</main>'
+
+      + toolFooterHTML();
+
+    // Bind events
+    bindEvents();
+    initPage();
+  }
+
+  function bindEvents() {
+    // Tab buttons
+    document.querySelectorAll('.tab-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        switchTab(this.dataset.tab);
+      });
+    });
+
+    // Stopwatch buttons
+    document.getElementById('swStartBtn').addEventListener('click', function() {
+      if (swRunning) swPause(); else swStart();
+    });
+    document.getElementById('swLapBtn').addEventListener('click', swLap);
+    document.getElementById('swResetBtn').addEventListener('click', swReset);
+
+    // Preset buttons
+    document.querySelectorAll('.preset-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var idx = parseInt(this.dataset.presetIdx);
+        var p = PRESETS[idx];
+        pomoSetDuration(p.minutes, p.type, idx);
+      });
+    });
+
+    // Custom time
+    document.getElementById('customApplyBtn').addEventListener('click', pomoApplyCustom);
+    document.getElementById('customMin').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') pomoApplyCustom();
+    });
+    document.getElementById('customSec').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') pomoApplyCustom();
+    });
+
+    // Pomodoro buttons
+    document.getElementById('pomoStartBtn').addEventListener('click', function() {
+      if (pomoRunning) pomoPause(); else pomoStart();
+    });
+    document.getElementById('pomoResetBtn').addEventListener('click', pomoReset);
+
+    // Suggestion button
+    document.getElementById('suggestionApplyBtn').addEventListener('click', pomoApplySuggestion);
+  }
+
+  function initPage() {
+    var focusData = loadFocusData();
+    pomoSessionCount = focusData.sessions;
+    updateTodayStats();
+    updateSessionLabel();
+    pomoUpdateRing();
+    renderLaps();
+  }
+
+  // ========================
+  //  INIT
+  // ========================
+  render();
+
+})();
+</script>
+</body>
+</html>
